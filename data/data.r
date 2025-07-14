@@ -178,13 +178,13 @@ process_file <- function(file_path) {
 # --- Stroke JSON processor ---
 process_json_stroke <- function() {
   message("🌐 Downloading Stroke data JSON...")
-  url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000"
+  url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000&$order=year"
   json_data <- fromJSON(url)
   
   json_data %>%
     transmute(
       year = as.integer(year),
-      group = paste(stratification1, stratification3, sep = " - "),
+      group = paste(stratification1, stratification2, stratification3, sep = " - "),
       value = as.numeric(data_value),
       lower = as.numeric(confidence_limit_low),
       upper = as.numeric(confidence_limit_high),
@@ -258,6 +258,7 @@ all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
     description = if_else(is.na(description), "No description yet", description),
     group = if_else(is.na(group), "Total", group)
   ) %>%
+  filter(!is.na(year) & !is.na(value)) %>%  # 🧹 Remove rows with NA year or value
   arrange(year)
 
 message("🎉 All data combined: ", nrow(all_data), " rows")
