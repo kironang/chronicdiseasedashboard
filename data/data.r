@@ -247,10 +247,23 @@ message("✅ PLACES done: ", nrow(places_data), " rows")
 chr_data <- map_dfr(chr_urls, process_chr_file)
 message("✅ County Health Rankings done: ", nrow(chr_data), " rows")
 
+# Helper function: Title Case but keep % and numbers intact nicely
+clean_indicator <- function(x) {
+  x %>%
+    str_trim() %>%                          # remove leading/trailing spaces
+    str_replace_all("\\s+", " ") %>%       # collapse multiple spaces to one
+    str_replace_all("%\\s*", "% ") %>%     # ensure % is followed by single space
+    str_to_lower() %>%                      # lowercase all
+    # Capitalize first letter of each word:
+    str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x)) 
+}
+
 all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
   mutate(
     indicator = recode(indicator, !!!indicator_map)
   ) %>%
+  # Clean indicators for consistent naming:
+  mutate(indicator = clean_indicator(indicator)) %>%
   left_join(category_lookup, by = "indicator") %>%
   mutate(
     category = if_else(is.na(category), "Uncategorized", category),
@@ -260,6 +273,7 @@ all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
   ) %>%
   filter(!is.na(year) & !is.na(value)) %>%  # 🧹 Remove rows with NA year or value
   arrange(year)
+
 
 message("🎉 All data combined: ", nrow(all_data), " rows")
 
