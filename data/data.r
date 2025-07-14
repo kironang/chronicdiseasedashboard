@@ -2,9 +2,41 @@ library(tidyverse)
 library(jsonlite)
 library(stringr)
 
-# --- Process CSV files starting with 'DiabetesAtlas' ---
+# --- Indicator renaming map (named vector) ---
+indicator_map <- c(
+  # Teeth loss
+  "All teeth lost among adults aged >=65 years" = "All teeth lost (65+)",
+  
+  # Disability
+  "Any disability among adults" = "Disability (18+)",
+  "Any disability among adults aged >=18 years" = "Disability (18+)",
+  
+  # Arthritis
+  "Arthritis among adults" = "Arthritis (18+)",
+  "Arthritis among adults aged >=18 years" = "Arthritis (18+)",
+  
+  # Binge drinking
+  "Binge drinking among adults" = "Binge drinking (18+)",
+  "Binge drinking among adults aged >=18 years" = "Binge drinking (18+)",
+  
+  # Cancer
+  "Cancer (excluding skin cancer) among adults aged >=18 years" = "Cancer (non-skin) (18+)",
+  "Cancer (non-skin) or melanoma among adults" = "Cancer (non-skin) (18+)"
+)
+
+# --- Category/Subcategory lookup (final indicator name → category, subcategory) ---
+category_lookup <- tribble(
+  ~indicator,              ~category,           ~subcategory,
+  "All teeth lost (65+)",  "Oral Health",       "Tooth Loss",
+  "Disability (18+)",      "Chronic Conditions","Disability",
+  "Arthritis (18+)",       "Chronic Conditions","Arthritis",
+  "Binge drinking (18+)",  "Behavioral Risk",   "Alcohol Use",
+  "Cancer (non-skin) (18+)","Chronic Conditions","Cancer"
+)
+
+# --- Process DiabetesAtlas CSV ---
 process_file <- function(file_path) {
-  message("Processing file: ", file_path)
+  message("📄 Processing: ", file_path)
   lines <- readLines(file_path)
   
   metadata_line <- lines[1]
@@ -77,12 +109,12 @@ process_file <- function(file_path) {
   return(data_final)
 }
 
-# --- Process JSON from Cardiovascular Stroke source ---
+# --- Process Stroke JSON ---
 process_json_stroke <- function() {
   url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000"
   json_data <- fromJSON(url)
   
-  stroke_data <- json_data %>%
+  json_data %>%
     transmute(
       year = as.integer(year),
       group = paste(stratification1, stratification3, sep = " - "),
@@ -93,33 +125,9 @@ process_json_stroke <- function() {
       unit = data_value_unit
     ) %>%
     distinct()
-  
-  return(stroke_data)
 }
 
-# --- Indicator name standardization map for BRFSS ---
-indicator_map <- c(
-  # Teeth loss
-  "All teeth lost among adults aged >=65 years" = "All teeth lost (65+)",
-  
-  # Disability
-  "Any disability among adults" = "Disability (18+)",
-  "Any disability among adults aged >=18 years" = "Disability (18+)",
-  
-  # Arthritis
-  "Arthritis among adults" = "Arthritis (18+)",
-  "Arthritis among adults aged >=18 years" = "Arthritis (18+)",
-  
-  # Binge drinking
-  "Binge drinking among adults" = "Binge drinking (18+)",
-  "Binge drinking among adults aged >=18 years" = "Binge drinking (18+)",
-  
-  # Cancer
-  "Cancer (excluding skin cancer) among adults aged >=18 years" = "Cancer (non-skin) (18+)",
-  "Cancer (non-skin) or melanoma among adults" = "Cancer (non-skin) (18+)"
-)
-
-# --- Process JSON from BRFSS (multiple sources) ---
+# --- Process BRFSS JSON ---
 process_json_brfss <- function() {
   urls <- c(
     "https://data.cdc.gov/resource/swc5-untb.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
@@ -132,43 +140,45 @@ process_json_brfss <- function() {
   brfss_list <- map(urls, function(url) {
     json_data <- fromJSON(url)
     
-    unmatched <- setdiff(unique(json_data$measure), names(indicator_map))
-    if(length(unmatched) > 0) {
-      message("⚠️ Unmatched indicators found in URL: ", url)
-      message(paste(unmatched, collapse = "\n"))
-    }
-    
     json_data %>%
+      mutate(
+        indicator = recode(measure, !!!indicator_map),
+        group = NA_character_
+      ) %>%
       transmute(
         year = as.integer(year),
-        group = NA_character_,
+        group,
         value = as.numeric(data_value),
         lower = as.numeric(low_confidence_limit),
         upper = as.numeric(high_confidence_limit),
-        indicator = recode(measure, !!!indicator_map),
+        indicator,
         unit = data_value_unit
       ) %>%
       distinct()
   })
   
-  brfss_data <- bind_rows(brfss_list)
-  return(brfss_data)
+  bind_rows(brfss_list)
 }
 
-# --- Run all processors ---
+# --- Main Script ---
+
 files <- list.files(pattern = "^DiabetesAtlas")
 diabetes_data <- map_dfr(files, process_file)
 stroke_data <- process_json_stroke()
-brfss_data  <- process_json_brfss()
+brfss_data <- process_json_brfss()
 
-# --- Combine all datasets ---
-combined_data <- bind_rows(diabetes_data, stroke_data, brfss_data)
-
-# --- Filter out bad rows ---
-combined_data <- combined_data %>% 
+combined_data <- bind_rows(diabetes_data, stroke_data, brfss_data) %>%
+  mutate(
+    # Standardize indicator names for all data
+    indicator = recode(indicator, !!!indicator_map)
+  ) %>%
+  left_join(category_lookup, by = "indicator") %>%
+  mutate(
+    category = coalesce(category, "Uncategorized"),
+    subcategory = coalesce(subcategory, "Uncategorized")
+  ) %>%
   filter(!is.na(year), !is.na(value)) %>%
-  arrange(indicator) # Sort by year for final deployment. Sort by indicator to detect problems
+  arrange(indicator, year)
 
-# --- Write final CSV ---
 write_csv(combined_data, "data.csv")
-message("✅ All data processed and written to data.csv")
+message("✅ Data processed and saved to data.csv")
