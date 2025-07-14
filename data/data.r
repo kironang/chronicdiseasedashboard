@@ -7,14 +7,11 @@ message("📦 Libraries loaded")
 # --- Indicator renaming map ---
 message("🔄 Defining indicator name mappings...")
 indicator_map <- c(
-  "All teeth lost among adults aged >=65 years" = "All teeth lost (65+)",
+  "All teeth lost among adults" = "All teeth lost (65+)",
   "Any disability among adults" = "Disability (18+)",
-  "Any disability among adults aged >=18 years" = "Disability (18+)",
   "Arthritis among adults" = "Arthritis (18+)",
-  "Arthritis among adults aged >=18 years" = "Arthritis (18+)",
   "Binge drinking among adults" = "Binge drinking (18+)",
-  "Binge drinking among adults aged >=18 years" = "Binge drinking (18+)",
-  "Cancer (excluding skin cancer) among adults aged >=18 years" = "Cancer (non-skin) (18+)",
+  "Cancer (excluding skin cancer) among adults" = "Cancer (non-skin) (18+)",
   "Cancer (non-skin) or melanoma among adults" = "Cancer (non-skin) (18+)"
 )
 
@@ -43,17 +40,11 @@ process_file <- function(file_path) {
   if (length(data_start_line) == 0) stop("❌ No data header found in ", file_path)
   
   data_raw <- read.csv(file_path, skip = data_start_line - 1, header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
-  
-  # Remove any columns with empty column names
   data_raw <- data_raw[, colnames(data_raw) != ""]
-  
-  # Filter out rows starting with US Diabetes Surveillance System (metadata rows)
   data_raw <- data_raw %>% filter(!grepl("^US Diabetes Surveillance System", data_raw[[1]]))
-  
   colnames(data_raw)[1] <- "year"
   data_raw$year <- as.integer(data_raw$year)
   
-  # Parse columns into group and measure info
   data_cols <- colnames(data_raw)[-1]
   parts <- str_match(data_cols, "^(.*) - (.*)$")
   
@@ -75,7 +66,6 @@ process_file <- function(file_path) {
   col_info$measure <- measure_map[col_info$measure_raw]
   col_info$measure[is.na(col_info$measure)] <- col_info$measure_raw[is.na(col_info$measure)]
   
-  # Pivot longer and join with col_info
   data_long <- data_raw %>%
     pivot_longer(cols = -year, names_to = "col_name", values_to = "val_raw") %>%
     left_join(col_info, by = "col_name") %>%
@@ -85,13 +75,11 @@ process_file <- function(file_path) {
     mutate(row_id = row_number()) %>%
     ungroup()
   
-  # Pivot wider so measures become columns (value, lower, upper)
   data_wide <- data_long %>%
     select(year, group, measure, value_num, row_id) %>%
     pivot_wider(names_from = measure, values_from = value_num) %>%
     arrange(year, group)
   
-  # Collapse rows by year and group - take first non-NA for each measure
   data_collapsed <- data_wide %>%
     group_by(year, group) %>%
     summarise(
@@ -101,7 +89,6 @@ process_file <- function(file_path) {
       .groups = "drop"
     )
   
-  # Add metadata columns
   data_final <- data_collapsed %>%
     mutate(indicator = indicator, unit = unit) %>%
     select(year, group, value, lower, upper, indicator, unit)
@@ -143,7 +130,13 @@ process_json_places <- function() {
     message("  🔗 Fetching: ", url)
     json_data <- fromJSON(url)
     json_data %>%
-      mutate(indicator = recode(measure, !!!indicator_map), group = NA_character_) %>%
+      mutate(
+        indicator = measure,
+        indicator = str_replace(indicator, " aged.*", ""),
+        indicator = str_trim(indicator),
+        indicator = recode(indicator, !!!indicator_map),
+        group = NA_character_
+      ) %>%
       transmute(
         year = as.integer(year),
         group,
@@ -161,8 +154,6 @@ process_json_places <- function() {
 
 # --- County Health Rankings processor ---
 process_county_health_rankings <- function() {
-  library(tidyverse)
-  
   message("⬇️ Downloading County Health Rankings CSV...")
   url <- "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv"
   chr_data <- read_csv(url, show_col_types = FALSE)
@@ -170,7 +161,6 @@ process_county_health_rankings <- function() {
   message("🔎 Filtering for McLennan County only...")
   chr_data <- chr_data %>% filter(Name == "McLennan County")
   
-  # Step 1: Melt all relevant columns to long format
   long_data <- chr_data %>%
     select(`Release Year`, starts_with("Median"), everything()) %>%
     pivot_longer(
@@ -178,9 +168,8 @@ process_county_health_rankings <- function() {
       names_to = "raw_col",
       values_to = "value"
     ) %>%
-    filter(!is.na(value))  # drop empty entries immediately
+    filter(!is.na(value))
   
-  # Step 2: Regex parsing of column names
   parsed_data <- long_data %>%
     mutate(
       value = as.numeric(value),
@@ -198,7 +187,6 @@ process_county_health_rankings <- function() {
     filter(!is.na(measure) & !is.na(indicator)) %>%
     select(`Release Year`, indicator, group, measure, value)
   
-  # Step 3: Reshape to wide format with value, lower, upper in columns
   wide_data <- parsed_data %>%
     pivot_wider(
       names_from = measure,
@@ -213,8 +201,6 @@ process_county_health_rankings <- function() {
   
   return(wide_data)
 }
-
-
 
 # --- Run everything ---
 message("🚀 Starting full data processing...")
@@ -232,9 +218,7 @@ message("✅ PLACES done: ", nrow(places_data), " rows")
 chr_data <- process_county_health_rankings()
 message("✅ County Health Rankings done: ", nrow(chr_data), " rows")
 
-# Combine all datasets
 all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
-  # Rename indicators according to map
   mutate(
     indicator = recode(indicator, !!!indicator_map),
     category = category_lookup$category[match(indicator, category_lookup$indicator)],
