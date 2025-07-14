@@ -1,7 +1,10 @@
 # chronicdiseasedashboard
 Kiron created this public health dashboard for a Summer 2025 internship with the Waco-McLennan Public Health District. It relies on the R programming language and the Shiny application framework. It also features the GNU Affero General Public License v3.0.
 
-Kiron tested the code in this repository with version 4.5.1 of the R programming language.
+Kiron tested the code in this repository with version 4.5.1 of the R programming language. Additionally, the R scripts in this repository use the following libraries:
+- "tidyverse", 2.0.0
+- "stringr", 1.5.1
+- "jsonlite", 2.0.0
 
 Additionally, Kiron compiled the data from several different online sources:
 - https://gis.cdc.gov/grasp/diabetes/diabetesatlas-surveillance.html

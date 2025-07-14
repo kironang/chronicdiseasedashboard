@@ -15,16 +15,95 @@ indicator_map <- c(
   "Cancer (non-skin) or melanoma among adults" = "Cancer (non-skin) (18+)"
 )
 
-# --- Category/Subcategory lookup ---
+# --- Category/Subcategory/Description lookup ---
 message("📚 Creating category lookup table...")
 category_lookup <- tribble(
-  ~indicator,               ~category,           ~subcategory,
-  "All teeth lost (65+)",   "Oral Health",       "Tooth Loss",
-  "Disability (18+)",       "Chronic Conditions","Disability",
-  "Arthritis (18+)",        "Chronic Conditions","Arthritis",
-  "Binge drinking (18+)",   "Behavioral Risk",   "Alcohol Use",
-  "Cancer (non-skin) (18+)", "Chronic Conditions","Cancer"
+  ~indicator,               ~category,           ~subcategory,          ~description,
+  "All teeth lost (65+)",   "Oral Health",       "Tooth Loss",          "Percent of adults 65+ who have lost all teeth",
+  "Disability (18+)",       "Chronic Conditions","Disability",          "Percent of adults 18+ reporting any disability",
+  "Arthritis (18+)",        "Chronic Conditions","Arthritis",           "Percent of adults 18+ with arthritis",
+  "Binge drinking (18+)",   "Behavioral Risk",   "Alcohol Use",         "Percent of adults 18+ binge drinking",
+  "Cancer (non-skin) (18+)", "Chronic Conditions","Cancer",              "Percent of adults 18+ diagnosed with cancer"
+  # Add more rows with description as you write them
 )
+
+# --- CHR CSV URLs for 2010–2025 ---
+chr_urls <- c(
+  "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2024.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2023_0.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2022.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2021.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2020_0.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2019.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2018_0.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2017.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2016.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2015.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2014.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2013.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2012.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2011.csv",
+  "https://www.countyhealthrankings.org/sites/default/files/analytic_data2010.csv"
+)
+
+# --- CHR CSV processor for one file ---
+process_chr_file <- function(url) {
+  message("⬇️ Downloading CHR CSV: ", url)
+  
+  chr_data <- tryCatch(read_csv(url, show_col_types = FALSE), error = function(e) {
+    message("❌ Failed to read: ", url)
+    return(NULL)
+  })
+  
+  if (is.null(chr_data)) return(NULL)
+  
+  # Drop columns with "=" in their name
+  chr_data <- chr_data %>% select(!matches("="))
+  
+  chr_data <- chr_data %>% filter(Name == "McLennan County")
+  message("✅ McLennan County rows: ", nrow(chr_data))
+  
+  long_data <- chr_data %>%
+    select(`Release Year`, starts_with("Median"), everything()) %>%
+    pivot_longer(
+      cols = -`Release Year`,
+      names_to = "raw_col",
+      values_to = "value"
+    ) %>%
+    filter(!is.na(value))
+  
+  parsed_data <- long_data %>%
+    mutate(
+      value = as.numeric(value),
+      raw_col = str_trim(raw_col),
+      indicator = str_match(raw_col, "^(.+?)(?: (?:CI low|CI high|raw value))?(?: \\([^)]+\\))?$")[, 2],
+      measure = case_when(
+        str_detect(raw_col, "CI low") ~ "lower",
+        str_detect(raw_col, "CI high") ~ "upper",
+        str_detect(raw_col, "raw value") ~ "value",
+        str_detect(raw_col, "\\)$") & !str_detect(raw_col, "CI") ~ "value",
+        TRUE ~ NA_character_
+      ),
+      group = str_match(raw_col, "\\(([^)]+)\\)")[, 2]
+    ) %>%
+    filter(!is.na(measure) & !is.na(indicator)) %>%
+    select(`Release Year`, indicator, group, measure, value)
+  
+  wide_data <- parsed_data %>%
+    pivot_wider(
+      names_from = measure,
+      values_from = value
+    ) %>%
+    mutate(
+      year = as.integer(`Release Year`),
+      unit = "value"
+    ) %>%
+    select(year, group, indicator, value, lower, upper, unit) %>%
+    arrange(year, indicator, group)
+  
+  return(wide_data)
+}
 
 # --- DiabetesAtlas CSV processor ---
 process_file <- function(file_path) {
@@ -152,56 +231,6 @@ process_json_places <- function() {
   bind_rows(places_list)
 }
 
-# --- County Health Rankings processor ---
-process_county_health_rankings <- function() {
-  message("⬇️ Downloading County Health Rankings CSV...")
-  url <- "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv"
-  chr_data <- read_csv(url, show_col_types = FALSE)
-  
-  message("🔎 Filtering for McLennan County only...")
-  chr_data <- chr_data %>% filter(Name == "McLennan County")
-  
-  long_data <- chr_data %>%
-    select(`Release Year`, starts_with("Median"), everything()) %>%
-    pivot_longer(
-      cols = -`Release Year`,
-      names_to = "raw_col",
-      values_to = "value"
-    ) %>%
-    filter(!is.na(value))
-  
-  parsed_data <- long_data %>%
-    mutate(
-      value = as.numeric(value),
-      raw_col = str_trim(raw_col),
-      indicator = str_match(raw_col, "^(.+?)(?: (?:CI low|CI high|raw value))?(?: \\([^)]+\\))?$")[, 2],
-      measure = case_when(
-        str_detect(raw_col, "CI low") ~ "lower",
-        str_detect(raw_col, "CI high") ~ "upper",
-        str_detect(raw_col, "raw value") ~ "value",
-        str_detect(raw_col, "\\)$") & !str_detect(raw_col, "CI") ~ "value",
-        TRUE ~ NA_character_
-      ),
-      group = str_match(raw_col, "\\(([^)]+)\\)")[, 2]
-    ) %>%
-    filter(!is.na(measure) & !is.na(indicator)) %>%
-    select(`Release Year`, indicator, group, measure, value)
-  
-  wide_data <- parsed_data %>%
-    pivot_wider(
-      names_from = measure,
-      values_from = value
-    ) %>%
-    mutate(
-      year = as.integer(`Release Year`),
-      unit = "value"
-    ) %>%
-    select(year, group, indicator, value, lower, upper, unit) %>%
-    arrange(year, indicator, group)
-  
-  return(wide_data)
-}
-
 # --- Run everything ---
 message("🚀 Starting full data processing...")
 
@@ -215,17 +244,21 @@ message("✅ Stroke done: ", nrow(stroke_data), " rows")
 places_data <- process_json_places()
 message("✅ PLACES done: ", nrow(places_data), " rows")
 
-chr_data <- process_county_health_rankings()
+chr_data <- map_dfr(chr_urls, process_chr_file)
 message("✅ County Health Rankings done: ", nrow(chr_data), " rows")
 
 all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
   mutate(
-    indicator = recode(indicator, !!!indicator_map),
-    category = category_lookup$category[match(indicator, category_lookup$indicator)],
-    subcategory = category_lookup$subcategory[match(indicator, category_lookup$indicator)],
-    group = ifelse(is.na(group), "Total", group)
+    indicator = recode(indicator, !!!indicator_map)
   ) %>%
-  arrange(year, indicator, group)
+  left_join(category_lookup, by = "indicator") %>%
+  mutate(
+    category = if_else(is.na(category), "Uncategorized", category),
+    subcategory = if_else(is.na(subcategory), "Uncategorized", subcategory),
+    description = if_else(is.na(description), "No description yet", description),
+    group = if_else(is.na(group), "Total", group)
+  ) %>%
+  arrange(year)
 
 message("🎉 All data combined: ", nrow(all_data), " rows")
 
