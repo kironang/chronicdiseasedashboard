@@ -1,67 +1,58 @@
 library(shiny)
+library(tidyverse)
 library(plotly)
-library(bslib)
-library(DT)
-library(dplyr)
-library(readr)
+library(scales)  # for axis formatting
 
 # Load data
-data <- read_csv("../data/data.csv")  # Replace with your actual file path
+data <- read_csv("data.csv", show_col_types = FALSE)
 
-# UI
 ui <- fluidPage(
-  theme = bs_theme(version = 5, bootswatch = "minty"),
-  titlePanel("Cardiovascular Health Trends"),
+  titlePanel("📊 Health Indicator Trends"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("group", "Select Group", choices = unique(data$group), selected = unique(data$group)[1]),
-      selectInput("indicator", "Select Indicator", choices = unique(data$indicator), selected = unique(data$indicator)[1]),
-      checkboxInput("show_table", "Show Data Table", value = FALSE),
-      width = 3
+      selectInput("indicator", "Choose Indicator:", choices = sort(unique(data$indicator))),
+      uiOutput("group_ui")
     ),
     mainPanel(
-      tabsetPanel(
-        tabPanel("Visualization", 
-                 br(),
-                 plotlyOutput("trendPlot", height = "500px")
-        ),
-        tabPanel("Data Table",
-                 conditionalPanel("input.show_table == true",
-                                  br(),
-                                  DTOutput("dataTable")
-                 )
-        )
-      )
+      plotlyOutput("time_series")
     )
   )
 )
 
-# Server
 server <- function(input, output, session) {
-  
-  filtered_data <- reactive({
-    data %>%
-      filter(group == input$group, indicator == input$indicator)
+  # Update group dropdown based on selected indicator
+  output$group_ui <- renderUI({
+    req(input$indicator)
+    groups <- data %>%
+      filter(indicator == input$indicator) %>%
+      pull(group) %>%
+      unique() %>%
+      sort()
+    selectInput("group", "Choose Group:", choices = groups)
   })
   
-  output$trendPlot <- renderPlotly({
-    df <- filtered_data()
+  # Render the plot
+  output$time_series <- renderPlotly({
+    req(input$indicator, input$group)
     
-    plot_ly(df, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
-            name = "Estimate", line = list(color = '#0072B2')) %>%
-      add_ribbons(ymin = ~lower, ymax = ~upper, name = "95% CI",
-                  line = list(color = 'rgba(0,114,178,0.2)'),
-                  fillcolor = 'rgba(0,114,178,0.2)') %>%
-      layout(title = paste(input$indicator, "in", input$group),
-             xaxis = list(title = "Year"),
-             yaxis = list(title = paste("Rate (", df$unit[1], ")", sep = "")),
-             hovermode = "x unified")
-  })
-  
-  output$dataTable <- renderDT({
-    filtered_data()
+    plot_data <- data %>%
+      filter(indicator == input$indicator, group == input$group) %>%
+      arrange(year)
+    
+    p <- ggplot(plot_data, aes(x = year, y = value)) +
+      geom_ribbon(aes(ymin = lower, ymax = upper), fill = "lightblue", alpha = 0.3) +
+      geom_line(color = "#2c3e50", size = 1.2) +
+      geom_point(color = "#2980b9", size = 2) +
+      scale_x_continuous(breaks = unique(plot_data$year)) +
+      labs(
+        title = paste(input$indicator, "in", input$group),
+        x = "Year",
+        y = paste0("Value (", unique(plot_data$unit), ")")
+      ) +
+      theme_minimal(base_size = 14)
+    
+    ggplotly(p, tooltip = c("x", "y"))
   })
 }
 
-# Run the app
 shinyApp(ui, server)
