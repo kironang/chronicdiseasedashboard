@@ -5,6 +5,9 @@ Kiron tested the code in this repository with version 4.5.1 of the R programming
 - "tidyverse", 2.0.0
 - "stringr", 1.5.1
 - "jsonlite", 2.0.0
+- "shiny", 1.11.1
+- "plotly", 4.11.0
+- "scales", 1.4.0
 
 Additionally, Kiron compiled the data from several different online sources:
 - https://gis.cdc.gov/grasp/diabetes/diabetesatlas-surveillance.html
