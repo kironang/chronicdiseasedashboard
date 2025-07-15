@@ -4,30 +4,6 @@ library(stringr)
 
 message("📦 Libraries loaded")
 
-# --- Indicator renaming map ---
-message("🔄 Defining indicator name mappings...")
-indicator_map <- c(
-  "All teeth lost among adults" = "All teeth lost (65+)",
-  "Any disability among adults" = "Disability (18+)",
-  "Arthritis among adults" = "Arthritis (18+)",
-  "Binge drinking among adults" = "Binge drinking (18+)",
-  "Cancer (excluding skin cancer) among adults" = "Cancer (non-skin) (18+)",
-  "Cancer (non-skin) or melanoma among adults" = "Cancer (non-skin) (18+)"
-)
-
-# --- Category/Subcategory/Description lookup ---
-message("📚 Creating category lookup table...")
-category_lookup <- tribble(
-  ~indicator,               ~category,           ~subcategory,          ~description,
-  "All teeth lost (65+)",   "Oral Health",       "Tooth Loss",          "Percent of adults 65+ who have lost all teeth",
-  "Disability (18+)",       "Chronic Conditions","Disability",          "Percent of adults 18+ reporting any disability",
-  "Arthritis (18+)",        "Chronic Conditions","Arthritis",           "Percent of adults 18+ with arthritis",
-  "Binge drinking (18+)",   "Behavioral Risk",   "Alcohol Use",         "Percent of adults 18+ binge drinking",
-  "Cancer (non-skin) (18+)", "Chronic Conditions","Cancer",              "Percent of adults 18+ diagnosed with cancer"
-  # Add more rows with description as you write them
-)
-
-# --- CHR CSV URLs for 2010–2025 ---
 chr_urls <- c(
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv",
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2024.csv",
@@ -47,7 +23,15 @@ chr_urls <- c(
   "https://www.countyhealthrankings.org/sites/default/files/analytic_data2010.csv"
 )
 
-# --- CHR CSV processor for one file ---
+clean_indicator <- function(x) {
+  x %>%
+    str_trim() %>%
+    str_replace_all("\\s+", " ") %>%
+    str_replace_all("%\\s*", "% ") %>%
+    str_to_lower() %>%
+    str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x))
+}
+
 process_chr_file <- function(url) {
   message("⬇️ Downloading CHR CSV: ", url)
   
@@ -58,9 +42,7 @@ process_chr_file <- function(url) {
   
   if (is.null(chr_data)) return(NULL)
   
-  # Drop columns with "=" in their name
   chr_data <- chr_data %>% select(!matches("="))
-  
   chr_data <- chr_data %>% filter(Name == "McLennan County")
   message("✅ McLennan County rows: ", nrow(chr_data))
   
@@ -91,10 +73,7 @@ process_chr_file <- function(url) {
     select(`Release Year`, indicator, group, measure, value)
   
   wide_data <- parsed_data %>%
-    pivot_wider(
-      names_from = measure,
-      values_from = value
-    ) %>%
+    pivot_wider(names_from = measure, values_from = value) %>%
     mutate(
       year = as.integer(`Release Year`),
       unit = "value"
@@ -105,7 +84,6 @@ process_chr_file <- function(url) {
   return(wide_data)
 }
 
-# --- DiabetesAtlas CSV processor ---
 process_file <- function(file_path) {
   message("📄 Processing DiabetesAtlas file: ", file_path)
   
@@ -169,13 +147,16 @@ process_file <- function(file_path) {
     )
   
   data_final <- data_collapsed %>%
-    mutate(indicator = indicator, unit = unit) %>%
+    mutate(
+      group = ifelse(str_detect(group, "^\\d"), paste0("Ages ", group), group),
+      indicator = indicator,
+      unit = unit
+    ) %>%
     select(year, group, value, lower, upper, indicator, unit)
   
   return(data_final)
 }
 
-# --- Stroke JSON processor ---
 process_json_stroke <- function() {
   message("🌐 Downloading Stroke data JSON...")
   url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000&$order=year"
@@ -194,7 +175,6 @@ process_json_stroke <- function() {
     distinct()
 }
 
-# --- PLACES JSON processor ---
 process_json_places <- function() {
   message("🌐 Downloading PLACES data JSONs...")
   urls <- c(
@@ -210,10 +190,8 @@ process_json_places <- function() {
     json_data <- fromJSON(url)
     json_data %>%
       mutate(
-        indicator = measure,
-        indicator = str_replace(indicator, " aged.*", ""),
+        indicator = str_replace(measure, " aged.*", ""),
         indicator = str_trim(indicator),
-        indicator = recode(indicator, !!!indicator_map),
         group = NA_character_
       ) %>%
       transmute(
@@ -231,50 +209,49 @@ process_json_places <- function() {
   bind_rows(places_list)
 }
 
-# --- Run everything ---
 message("🚀 Starting full data processing...")
 
 files <- list.files(pattern = "^DiabetesAtlas")
 diabetes_data <- map_dfr(files, process_file)
-message("✅ DiabetesAtlas done: ", nrow(diabetes_data), " rows")
-
 stroke_data <- process_json_stroke()
-message("✅ Stroke done: ", nrow(stroke_data), " rows")
-
 places_data <- process_json_places()
-message("✅ PLACES done: ", nrow(places_data), " rows")
-
 chr_data <- map_dfr(chr_urls, process_chr_file)
-message("✅ County Health Rankings done: ", nrow(chr_data), " rows")
-
-# Helper function: Title Case but keep % and numbers intact nicely
-clean_indicator <- function(x) {
-  x %>%
-    str_trim() %>%                          # remove leading/trailing spaces
-    str_replace_all("\\s+", " ") %>%       # collapse multiple spaces to one
-    str_replace_all("%\\s*", "% ") %>%     # ensure % is followed by single space
-    str_to_lower() %>%                      # lowercase all
-    # Capitalize first letter of each word:
-    str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x)) 
-}
 
 all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
-  mutate(
-    indicator = recode(indicator, !!!indicator_map)
-  ) %>%
-  # Clean indicators for consistent naming:
   mutate(indicator = clean_indicator(indicator)) %>%
-  left_join(category_lookup, by = "indicator") %>%
+  filter(!is.na(year) & !is.na(value)) %>%
+  mutate(group = if_else(is.na(group), "Total", group))
+
+if (!file.exists("indicators.csv")) {
+  indicator_template <- all_data %>%
+    distinct(indicator) %>%
+    arrange(indicator) %>%
+    mutate(
+      new_indicator = "",
+      category = "",
+      subcategory = "",
+      description = ""
+    )
+  write_csv(indicator_template, "indicators.csv")
+  message("📄 Classification template written to: indicators.csv")
+  stop("🛑 Edit 'indicators.csv' before continuing. Then re-run this script.")
+}
+
+indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE)
+
+all_data_final <- all_data %>%
+  left_join(indicator_meta, by = "indicator") %>%
   mutate(
-    category = if_else(is.na(category), "Uncategorized", category),
-    subcategory = if_else(is.na(subcategory), "Uncategorized", subcategory),
-    description = if_else(is.na(description), "No description yet", description),
-    group = if_else(is.na(group), "Total", group)
+    indicator = case_when(
+      !is.na(new_indicator) & new_indicator != "" ~ new_indicator,
+      TRUE ~ indicator
+    ),
+    category = if_else(is.na(category) | category == "", "Uncategorized", category),
+    subcategory = if_else(is.na(subcategory) | subcategory == "", "Uncategorized", subcategory),
+    description = if_else(is.na(description) | description == "", "No description yet", description)
   ) %>%
-  filter(!is.na(year) & !is.na(value)) %>%  # 🧹 Remove rows with NA year or value
+  select(year, group, indicator, value, lower, upper, unit, category, subcategory, description) %>%
   arrange(year)
 
-
-message("🎉 All data combined: ", nrow(all_data), " rows")
-
-write_csv(all_data, "data.csv")
+write_csv(all_data_final, "data.csv")
+message("🎉 Done! Final dataset saved as data.csv with ", nrow(all_data_final), " rows.")
