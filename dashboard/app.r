@@ -4,7 +4,7 @@ library(plotly)
 library(scales)  # for axis formatting
 
 # Load data
-data <- read_csv("data.csv", show_col_types = FALSE)
+data <- read_csv("../data/data.csv", show_col_types = FALSE)
 
 ui <- fluidPage(
   titlePanel("📊 Health Indicator Trends"),
