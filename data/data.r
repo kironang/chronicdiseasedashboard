@@ -246,8 +246,22 @@ if (!file.exists("indicators.csv")) {
 }
 
 # Create groups.csv if missing
+# Load indicators.csv
+indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE) %>%
+  rename(unit_meta = unit)
+
+# Filter out excluded indicators before generating groups.csv
+included_indicators <- indicator_meta %>%
+  filter(is.na(exclude) | tolower(exclude) != "yes") %>%
+  pull(indicator) %>%
+  clean_indicator()
+
+filtered_data <- all_data %>%
+  filter(indicator %in% included_indicators)
+
+# Create groups.csv if missing, using only relevant groups
 if (!file.exists("groups.csv")) {
-  group_template <- all_data %>%
+  group_template <- filtered_data %>%
     distinct(group) %>%
     arrange(group) %>%
     mutate(new_group = "")
@@ -255,6 +269,7 @@ if (!file.exists("groups.csv")) {
   message("📄 Group renaming template written to: groups.csv")
   stop("🛑 Edit 'groups.csv' before continuing. Then re-run this script.")
 }
+
 
 # Load metadata
 indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE) %>%

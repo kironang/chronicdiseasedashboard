@@ -1,0 +1,190 @@
+indicator,unit,new_indicator,category,subcategory,description,exclude
+% 65 And Older,%,,Demographics,,,no
+% American Indian & Alaska Native,%,% American Indian or Alaskan Native,Demographics,,,no
+% American Indian And Alaskan Native,%,% American Indian or Alaskan Native,Demographics,,,no
+% American Indian Or Alaska Native,%,% American Indian or Alaskan Native,Demographics,,,no
+% Asian,%,,Demographics,,,no
+% Below 18 Years Of Age,%,,Demographics,,,no
+% Disability: Functional Limitations,%,,Demographics,,,no
+% Female,%,% Female,Demographics,,,no
+% Females,%,% Female,Demographics,,,no
+% Hispanic,%,,Demographics,,,no
+% Native Hawaiian Or Other Pacific Islander,%,% Pacific Islander,Demographics,,,no
+% Native Hawaiian/other Pacific Islander,%,% Pacific Islander,Demographics,,,no
+% Non-Hispanic African American,%,% Non-Hispanic Black,Demographics,,,no
+% Non-Hispanic Black,%,% Non-Hispanic Black,Demographics,,,no
+% Non-Hispanic White,%,,Demographics,,,no
+% Not Proficient In English,%,,Demographics,,,no
+% Rural,%,,Demographics,,,no
+Access To Exercise Opportunities,value,,Social Determinants of Health,,,no
+Access To Healthy Foods,value,Access To Healthy Foods,Social Determinants of Health,,,no
+Access To Healthy Foods Raw Value...221,value,Access To Healthy Foods,Social Determinants of Health,,,no
+Access To Parks,value,,Social Determinants of Health,,,no
+Access To Recreational Facilities,value,,Social Determinants of Health,,,no
+Adult Obesity,value,,Disease and Lifestyle Conditions,,,no
+Adult Smoking,value,,Disease and Lifestyle Conditions,,,no
+Adverse Climate Events,value,,,,,yes
+Air Pollution - Particulate Matter,value,,,,,yes
+Air Pollution-Ozone Days,value,,,,,yes
+Air Pollution-Particulate Matter Days,value,,,,,yes
+Air Pollution: Particulate Matter,value,,,,,yes
+Alcohol-Impaired Driving Deaths,value,,Mortality,,,no
+All Heart Disease,"per 100,000",Number of Adults Who Died From Any Heart Disease,Mortality,,,no
+All Stroke,"per 100,000",Number of Adults Who Died From a Stroke,Mortality,,,no
+All Teeth Lost Among Adults,%,% of Adults Who Lost All Their Teeth,Disease and Lifestyle Conditions,,,no
+Any Disability Among Adults,%,% of Adults With Any Disability,Disease and Lifestyle Conditions,,,no
+Arthritis Among Adults,%,% of Adults with Arthritis,Disease and Lifestyle Conditions,,,no
+Binge Drinking,value,Number of Adults Who Binge Drink,Disease and Lifestyle Conditions,,,no
+Binge Drinking Among Adults,%,% of Adults Who Binge Drink,Disease and Lifestyle Conditions,,,no
+Broadband Access,value,,Social Determinants of Health,,,no
+Cancer (excluding Skin Cancer) Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Cancer (non-Skin) Or Melanoma Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Cardiovascular Disease (cvd),"per 100,000",Number of Adults Who Died From Cardiovascular Disease,Disease and Lifestyle Conditions,,,no
+Census Participation,value,,,,,yes
+Cervical Cancer Screening Among Adult Women,%,% of Adult Women Who Were Screened for Cervical Cancer,Access to Care,,,no
+Child Care Centers,value,Childcare Centers,Childcare and Education,,,no
+Child Care Cost Burden,value,Childcare Cost Burden,Childcare and Education,,,no
+Child Mortality,value,,Mortality,,,no
+Childcare Centers,value,Childcare Centers,Childcare and Education,,,no
+Childcare Cost Burden,value,Childcare Cost Burden,Childcare and Education,,,no
+Children Eligible For Free Lunch,value,Children Eligible for Free Lunch,Childcare and Education,,,no
+Children Eligible For Free Or Reduced Price Lunch,value,Children Eligible for Free Lunch,Childcare and Education,,,no
+Children In Poverty,value,,Social Determinants of Health,,,no
+Children In Single-Parent Households,value,,Social Determinants of Health,,,no
+Chlamydia Rate,value,,,,,yes
+Cholesterol Screening Among Adults,%,,Access to Care,,,no
+Chronic Kidney Disease Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Chronic Obstructive Pulmonary Disease Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Cognitive Disability Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Cognitive Disability Among Adults Ages >=18 Years,%,,Disease and Lifestyle Conditions,,,no
+College Degrees,value,,Childcare and Education,,,no
+Colorectal Cancer Screening Among Adults,%,,Access to Care,,,no
+Coronary Heart Disease (chd),"per 100,000",,Disease and Lifestyle Conditions,,,no
+Coronary Heart Disease Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Could Not See Doctor Due To Cost,value,,Access to Care,,,no
+Covid-19 Age-Adjusted Mortality,value,,Mortality,,,no
+Current Asthma Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Current Cigarette Smoking Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Current Lack Of Health Insurance Among Adults,%,,Access to Care,,,no
+Current Smoking Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Dentists,value,,Access to Care,,,no
+Depression Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Diabetes Monitoring,value,,Disease and Lifestyle Conditions,,,no
+Diabetes Prevalence,value,,Disease and Lifestyle Conditions,,,no
+Diagnosed Diabetes,Percentage,,Disease and Lifestyle Conditions,,,no
+Diagnosed Diabetes,Age-Adjusted Percentage,,Disease and Lifestyle Conditions,,,no
+Diagnosed Diabetes Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Disconnected Youth,value,,Childcare and Education,,,no
+Drinking Water Violations,value,,,,,yes
+Driving Alone To Work,value,,,,,yes
+Drug Overdose Deaths,value,,Mortality,,,no
+Drug Overdose Deaths - Modeled,value,,Mortality,,,no
+Drug Poisoning Deaths,value,,Mortality,,,no
+Excessive Drinking,value,,Disease and Lifestyle Conditions,,,no
+Fair Or Poor Self-Rated Health Status Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Fast Food Restaurants,value,,,,,yes
+"Fecal Occult Blood Test, Sigmoidoscopy, Or Colonoscopy Among Adults",%,,Disease and Lifestyle Conditions,,,no
+Feeling Socially Isolated Among Adults,%,,Social Determinants of Health,,,no
+Feelings Of Loneliness,value,,Social Determinants of Health,,,no
+Firearm Fatalities,value,,Mortality,,,no
+Flu Vaccinations,value,,Access to Care,,,no
+Food Environment Index,value,,,,,yes
+Food Insecurity,value,,Social Determinants of Health,,,no
+Food Insecurity In The Past 12 Months Among Adults,%,,Social Determinants of Health,,,no
+Frequent Mental Distress,value,,Social Determinants of Health,,,no
+Frequent Mental Distress Among Adults,%,,Social Determinants of Health,,,no
+Frequent Physical Distress,value,,Social Determinants of Health,,,no
+Frequent Physical Distress Among Adults,%,,Social Determinants of Health,,,no
+Gender Pay Gap,value,,Social Determinants of Health,,,no
+Health Care Costs,value,,Access to Care,,,no
+Hearing Disability Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Heart Failure,"per 100,000",,Disease and Lifestyle Conditions,,,no
+High Blood Pressure Among Adults,%,,Disease and Lifestyle Conditions,,,no
+High Cholesterol Among Adults,%,,Disease and Lifestyle Conditions,,,no
+High Cholesterol Among Adults Who Have Ever Been Screened,%,,Disease and Lifestyle Conditions,,,no
+High Housing Costs,value,,Social Determinants of Health,,,no
+High School Completion,value,,Childcare and Education,,,no
+High School Graduation,value,,Childcare and Education,,,no
+Hiv Prevalence,value,,Disease and Lifestyle Conditions,,,no
+Homeownership,value,,Social Determinants of Health,,,no
+Homicides,value,,Mortality,,,no
+Hospice Use,value,,Access to Care,,,no
+Housing Insecurity In The Past 12 Months Among Adults,%,,Social Determinants of Health,,,no
+Illiteracy,value,,Childcare and Education,,,no
+Inadequate Social Support,value,,Social Determinants of Health,,,no
+Income Inequality,value,,Social Determinants of Health,,,no
+Independent Living Disability Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Infant Mortality,value,,Mortality,,,no
+Injury Deaths,value,,Mortality,,,no
+Insufficient Sleep,value,,Disease and Lifestyle Conditions,,,no
+Juvenile Arrests,value,,,,,yes
+Lack Of Reliable Transportation In The Past 12 Months Among Adults,%,,Social Determinants of Health,,,no
+Lack Of Social And Emotional Support,value,,Social Determinants of Health,,,no
+Lack Of Social And Emotional Support Among Adults,%,,Social Determinants of Health,,,no
+Library Access,value,,Social Determinants of Health,,,no
+Life Expectancy,value,,Population Health,,,no
+Limited Access To Healthy Foods,value,,Social Determinants of Health,,,no
+Liquor Store Density,value,,,,,yes
+Long Commute - Driving Alone,value,,,,,yes
+Low Birth Weight,value,Low Birth Weight,Population Health,,,no
+Low Birthweight,value,Low Birth Weight,Population Health,,,no
+Mammography Screening,value,,Access to Care,,,no
+Mammography Use Among Women,%,,Access to Care,,,no
+Math Scores,value,,Childcare and Education,,,no
+Median Household Income,value,,Social Determinants of Health,,,no
+Mental Health Not Good For >=14 Days Among Adults,%,,Social Determinants of Health,,,no
+Mental Health Providers,value,,Access to Care,,,no
+Mobility Disability Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Motor Vehicle Crash Deaths,value,,Mortality,,,no
+Newly Diagnosed Diabetes,Age-Adjusted Rate per 1000,,Disease and Lifestyle Conditions,,,no
+No Leisure-Time Physical Activity Among Adults,%,,Social Determinants of Health,,,no
+Obesity,Age-Adjusted Percentage,,Disease and Lifestyle Conditions,,,no
+Obesity,Percentage,,Disease and Lifestyle Conditions,,,no
+Obesity Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Older Adult Men,%,,Demographics,,,no
+Older Adult Women,%,,Demographics,,,no
+Other Primary Care Providers,value,,Access to Care,,,no
+Physical Health Not Good For >=14 Days Among Adults,%,,Social Determinants of Health,,,no
+Physical Inactivity,Age-Adjusted Percentage,,Social Determinants of Health,,,no
+Physical Inactivity,Percentage,,Social Determinants of Health,,,no
+Physical Inactivity,value,,Social Determinants of Health,,,no
+Poor Mental Health Days,value,,Social Determinants of Health,,,no
+Poor Or Fair Health,value,,Social Determinants of Health,,,no
+Poor Physical Health Days,value,,Social Determinants of Health,,,no
+Population,value,,Demographics,,,no
+Premature Age-Adjusted Mortality,value,,Mortality,,,no
+Premature Death,value,,Mortality,,,no
+Preventable Hospital Stays,value,,Access to Care,,,no
+Primary Care Physicians,value,,Access to Care,,,no
+Reading Scores,value,,Childcare and Education,,,no
+Received Food Stamps In The Past 12 Months Among Adults,%,,Social Determinants of Health,,,no
+Residential Segregation - Black/white,value,,,,,yes
+Residential Segregation - Non-White/white,value,,,,,yes
+School Funding Adequacy,value,,Childcare and Education,,,no
+School Segregation,value,,,,,yes
+Self-Care Disability Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Severe Housing Cost Burden,value,,Social Determinants of Health,,,no
+Severe Housing Problems,value,,Social Determinants of Health,,,no
+Sexually Transmitted Infections,value,,,,,yes
+Short Sleep Duration Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Single-Parent Households,value,,Social Determinants of Health,,,no
+Sleeping Less Than 7 Hours Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Social Associations,value,,Social Determinants of Health,,,no
+Some College,value,,Childcare and Education,,,no
+Stroke Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Suicides,value,,Mortality,,,no
+Taking Medicine For High Blood Pressure Control Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Taking Medicine To Control High Blood Pressure Among Adults With High Blood Pressure,%,,Disease and Lifestyle Conditions,,,no
+Teen Births,value,,Population Health,,,no
+Traffic Volume,value,,,,,yes
+Unemployment,value,,Social Determinants of Health,,,no
+Uninsured,value,,Access to Care,,,no
+Uninsured Adults,value,,Access to Care,,,no
+Uninsured Children,value,,Access to Care,,,no
+Utility Services Shut-Off Threat In The Past 12 Months Among Adults,%,,Social Determinants of Health,,,no
+Violent Crime,value,,Social Determinants of Health,,,no
+Vision Disability Among Adults,%,,Disease and Lifestyle Conditions,,,no
+Visited Dentist Or Dental Clinic In The Past Year Among Adults,%,,Access to Care,,,no
+Visits To Dentist Or Dental Clinic Among Adults,%,,Access to Care,,,no
+Visits To Doctor For Routine Checkup Within The Past Year Among Adults,%,,Access to Care,,,no
+Voter Turnout,value,,,,,yes
