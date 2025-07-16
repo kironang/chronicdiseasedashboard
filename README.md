@@ -12,4 +12,4 @@ Kiron tested the code in this repository with version 4.5.1 of the R programming
 - https://www.countyhealthrankings.org/health-data/methodology-and-sources/data-documentation
 - https://www.countyhealthrankings.org/health-data/methodology-and-sources/data-documentation/national-data-documentation-2010-2023
 
-This repository represents the code corresponding to version 0.1. View this repository online at https://github.com/kironang/chronicdiseasedashboard.
+This repository represents the code corresponding to version 0.1.0. View this repository online at https://github.com/kironang/chronicdiseasedashboard.
