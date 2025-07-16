@@ -146,8 +146,8 @@ Older Adult Women,%,,Demographics,,,no
 Other Primary Care Providers,value,,Access to Care,,,no
 Physical Health Not Good For >=14 Days Among Adults,%,,Social Determinants of Health,,,no
 Physical Inactivity,Age-Adjusted Percentage,,Social Determinants of Health,,,no
-Physical Inactivity,Percentage,,Social Determinants of Health,,,no
-Physical Inactivity,value,,Social Determinants of Health,,,no
+Physical Inactivity,Percentage,,Social Determinants of Health,,,yes
+Physical Inactivity,value,,Social Determinants of Health,,,yes
 Poor Mental Health Days,value,,Social Determinants of Health,,,no
 Poor Or Fair Health,value,,Social Determinants of Health,,,no
 Poor Physical Health Days,value,,Social Determinants of Health,,,no
