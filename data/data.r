@@ -1,12 +1,20 @@
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
 library(tidyverse)
 library(jsonlite)
 library(stringr)
-
 message("📦 Libraries loaded")
 
-# CHR CSV URLs
+# STANDARDIZE INDICATOR NAMES TO REDUCE RENAMING WORKLOAD
+clean_indicator <- function(x) {
+  x %>%
+    str_trim() %>%
+    str_replace_all("\\s+", " ") %>%
+    str_replace_all("%\\s*", "% ") %>%
+    str_to_lower() %>%
+    str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x))
+}
+
+# COUNTY HEALTH RANKINGS DATASETS FROM 2010 - 2025
 chr_urls <- c(
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv",
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2024.csv",
@@ -26,20 +34,7 @@ chr_urls <- c(
   "https://www.countyhealthrankings.org/sites/default/files/analytic_data2010.csv"
 )
 
-# Clean indicator names
-clean_indicator <- function(x) {
-  x %>%
-    str_trim() %>%
-    str_replace_all("\\s+", " ") %>%
-    str_replace_all("%\\s*", "% ") %>%
-    str_to_lower() %>%
-    str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x))
-}
-
-# --- Functions for processing CHR, JSON, and CSVs ---
-# [UNCHANGED: all your original functions for process_chr_file, process_file, etc.]
-
-# CHR CSVs
+# COUNTY HEALTH RANKINGS DATASET
 process_chr_file <- function(url) {
   message("⬇️ Downloading CHR CSV: ", url)
   
@@ -87,8 +82,8 @@ process_chr_file <- function(url) {
   return(wide_data)
 }
 
-# process_file, process_json_stroke, process_json_places [unchanged]
 
+# PROCESS DIABETES ATLAS FILES
 process_file <- function(file_path) {
   message("📄 Processing DiabetesAtlas file: ", file_path)
   
@@ -151,6 +146,7 @@ process_file <- function(file_path) {
   return(data_final)
 }
 
+# PROCESS CDC STROKE AND HEART DISEASE MORTALITY DATA
 process_json_stroke <- function() {
   message("🌐 Downloading Stroke data JSON...")
   url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000&$order=year"
@@ -170,6 +166,7 @@ process_json_stroke <- function() {
     distinct()
 }
 
+# PROCESS CDC "PLACES" DATASET
 process_json_places <- function() {
   message("🌐 Downloading PLACES data JSONs...")
   urls <- c(
@@ -205,11 +202,25 @@ process_json_places <- function() {
 }
 
 
-
-# --- Begin full script execution ---
 message("🚀 Starting full data processing...")
 
+ensure_final_newline <- function(file_path) {
+  con <- file(file_path, open = "rb")
+  raw_data <- readBin(con, what = "raw", n = file.info(file_path)$size)
+  close(con)
+  
+  # Check if last byte is a newline (0x0A)
+  if (raw_data[length(raw_data)] != as.raw(0x0A)) {
+    message("✏️ Adding newline to: ", file_path)
+    # Append newline
+    cat("\n", file = file_path, append = TRUE)
+  }
+}
+
+
 files <- list.files(pattern = "^DiabetesAtlas")
+walk(files, ensure_final_newline)
+
 diabetes_data <- map_dfr(files, process_file)
 stroke_data <- process_json_stroke()
 places_data <- process_json_places()
