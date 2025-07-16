@@ -167,8 +167,10 @@ process_json_places <- function() {
   message("🌐 Downloading PLACES data JSONs...")
   urls <- c(
     "https://data.cdc.gov/resource/swc5-untb.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/h3ej-a9ec.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence"
-    # add more if needed
+    "https://data.cdc.gov/resource/h3ej-a9ec.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
+    "https://data.cdc.gov/resource/duw2-7jbt.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
+    "https://data.cdc.gov/resource/pqpp-u99h.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
+    "https://data.cdc.gov/resource/dv4u-3x3q.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence"
   )
 
   places_list <- map(urls, function(url) {
@@ -195,7 +197,7 @@ process_json_places <- function() {
   bind_rows(places_list)
 }
 
-# 🚀 Start processing
+
 message("🚀 Starting full data processing...")
 
 files <- list.files(pattern = "^DiabetesAtlas")
@@ -205,59 +207,71 @@ places_data <- process_json_places()
 chr_data <- map_dfr(chr_urls, process_chr_file)
 
 all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
-  mutate(indicator = clean_indicator(indicator)) %>%
-  filter(!is.na(year) & !is.na(value)) %>%
-  mutate(group = if_else(is.na(group), "Total", group))
+  mutate(
+    indicator = clean_indicator(indicator),
+    group = if_else(is.na(group), "Total", group)
+  ) %>%
+  filter(!is.na(year) & !is.na(value))
 
-# Write indicators.csv if missing
+# --- Generate indicators.csv if missing --- #
 if (!file.exists("indicators.csv")) {
+  message("📄 indicators.csv not found — creating template...")
+
   indicator_template <- all_data %>%
     distinct(indicator, unit, source) %>%
     arrange(indicator) %>%
+    rowwise() %>%
     mutate(
+      groups = paste(sort(unique(all_data$group[all_data$indicator == indicator & all_data$unit == unit])), collapse = "; "),
       new_indicator = "",
+      new_unit = "",
       category = "",
       subcategory = "",
       description = "",
       exclude = "no"
-    )
+    ) %>%
+    ungroup()
+
   write_csv(indicator_template, "indicators.csv")
-  message("📄 Classification template written to: indicators.csv")
-  stop("🛑 Edit 'indicators.csv' before continuing. Then re-run this script.")
+  message("📄 Template written: indicators.csv")
+  stop("🛑 Please edit 'indicators.csv' (add names, categories, etc.) then re-run.")
 }
 
-# Load indicator metadata
+# --- Load edited indicators.csv --- #
 indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE)
 
-# Filter by included indicators only
 included_indicators <- indicator_meta %>%
   filter(is.na(exclude) | tolower(exclude) != "yes")
 
+# --- Merge metadata into data --- #
 filtered_data <- all_data %>%
-  inner_join(included_indicators,
-             by = c("indicator", "unit", "source")) %>%
+  inner_join(included_indicators, by = c("indicator", "unit", "source")) %>%
   mutate(
     indicator = if_else(new_indicator != "", new_indicator, indicator),
+    unit = if_else(new_unit != "", new_unit, unit),
     category = if_else(category == "", "Uncategorized", category),
     subcategory = if_else(subcategory == "", "Uncategorized", subcategory),
     description = if_else(description == "", "No description yet", description)
   ) %>%
   select(year, group, indicator, value, lower, upper, unit, source, category, subcategory, description)
 
-# groups.csv
+# --- Generate groups.csv if missing --- #
 if (!file.exists("groups.csv")) {
+  message("📄 groups.csv not found — creating template...")
+
   group_template <- filtered_data %>%
     distinct(group) %>%
     arrange(group) %>%
     mutate(new_group = "")
+
   write_csv(group_template, "groups.csv")
-  message("📄 Group renaming template written to: groups.csv")
-  stop("🛑 Edit 'groups.csv' before continuing. Then re-run this script.")
+  message("📄 Template written: groups.csv")
+  stop("🛑 Please edit 'groups.csv' (rename or group labels) then re-run.")
 }
 
+# --- Load and apply group renames --- #
 group_meta <- read_csv("groups.csv", show_col_types = FALSE)
 
-# Apply group renames
 final_data <- filtered_data %>%
   left_join(group_meta, by = "group") %>%
   mutate(group = if_else(!is.na(new_group) & new_group != "", new_group, group)) %>%
