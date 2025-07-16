@@ -34,7 +34,6 @@ clean_indicator <- function(x) {
     str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x))
 }
 
-# Process CHR file
 process_chr_file <- function(url) {
   message("⬇️ Downloading CHR CSV: ", url)
 
@@ -50,11 +49,7 @@ process_chr_file <- function(url) {
   message("✅ McLennan County rows: ", nrow(chr_data))
 
   long_data <- chr_data %>%
-    pivot_longer(
-      cols = -`Release Year`,
-      names_to = "raw_col",
-      values_to = "value"
-    ) %>%
+    pivot_longer(cols = -`Release Year`, names_to = "raw_col", values_to = "value") %>%
     filter(!is.na(value))
 
   parsed_data <- long_data %>%
@@ -78,15 +73,15 @@ process_chr_file <- function(url) {
     pivot_wider(names_from = measure, values_from = value) %>%
     mutate(
       year = as.integer(`Release Year`),
-      unit = "value"
+      unit = "value",
+      source = "CHR"
     ) %>%
-    select(year, group, indicator, value, lower, upper, unit) %>%
+    select(year, group, indicator, value, lower, upper, unit, source) %>%
     arrange(year, indicator, group)
 
   return(wide_data)
 }
 
-# Process DiabetesAtlas files
 process_file <- function(file_path) {
   message("📄 Processing DiabetesAtlas file: ", file_path)
 
@@ -130,37 +125,25 @@ process_file <- function(file_path) {
     pivot_longer(cols = -year, names_to = "col_name", values_to = "val_raw") %>%
     left_join(col_info, by = "col_name") %>%
     mutate(value_num = suppressWarnings(as.numeric(val_raw))) %>%
-    select(-val_raw) %>%
-    group_by(year, group, measure) %>%
-    mutate(row_id = row_number()) %>%
-    ungroup()
+    select(-val_raw)
 
   data_wide <- data_long %>%
-    select(year, group, measure, value_num, row_id) %>%
+    select(year, group, measure, value_num) %>%
     pivot_wider(names_from = measure, values_from = value_num) %>%
     arrange(year, group)
 
-  data_collapsed <- data_wide %>%
-    group_by(year, group) %>%
-    summarise(
-      value = first(na.omit(value)),
-      lower = first(na.omit(lower)),
-      upper = first(na.omit(upper)),
-      .groups = "drop"
-    )
-
-  data_final <- data_collapsed %>%
+  data_final <- data_wide %>%
     mutate(
       group = ifelse(str_detect(group, "^\\d"), paste0("Ages ", group), group),
       indicator = indicator,
-      unit = unit
+      unit = unit,
+      source = "DiabetesAtlas"
     ) %>%
-    select(year, group, value, lower, upper, indicator, unit)
+    select(year, group, indicator, value, lower, upper, unit, source)
 
   return(data_final)
 }
 
-# Stroke JSON
 process_json_stroke <- function() {
   message("🌐 Downloading Stroke data JSON...")
   url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000&$order=year"
@@ -174,20 +157,18 @@ process_json_stroke <- function() {
       lower = as.numeric(confidence_limit_low),
       upper = as.numeric(confidence_limit_high),
       indicator = topic,
-      unit = data_value_unit
+      unit = data_value_unit,
+      source = "CDC Stroke"
     ) %>%
     distinct()
 }
 
-# PLACES JSONs
 process_json_places <- function() {
   message("🌐 Downloading PLACES data JSONs...")
   urls <- c(
     "https://data.cdc.gov/resource/swc5-untb.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/h3ej-a9ec.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/duw2-7jbt.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/pqpp-u99h.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/dv4u-3x3q.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence"
+    "https://data.cdc.gov/resource/h3ej-a9ec.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence"
+    # add more if needed
   )
 
   places_list <- map(urls, function(url) {
@@ -196,7 +177,6 @@ process_json_places <- function() {
     json_data %>%
       mutate(
         indicator = str_replace(measure, " aged.*", ""),
-        indicator = str_trim(indicator),
         group = NA_character_
       ) %>%
       transmute(
@@ -205,8 +185,9 @@ process_json_places <- function() {
         value = as.numeric(data_value),
         lower = as.numeric(low_confidence_limit),
         upper = as.numeric(high_confidence_limit),
-        indicator,
-        unit = data_value_unit
+        indicator = str_trim(indicator),
+        unit = data_value_unit,
+        source = "PLACES"
       ) %>%
       distinct()
   })
@@ -214,7 +195,7 @@ process_json_places <- function() {
   bind_rows(places_list)
 }
 
-# 🚀 Begin Processing
+# 🚀 Start processing
 message("🚀 Starting full data processing...")
 
 files <- list.files(pattern = "^DiabetesAtlas")
@@ -228,10 +209,10 @@ all_data <- bind_rows(diabetes_data, stroke_data, places_data, chr_data) %>%
   filter(!is.na(year) & !is.na(value)) %>%
   mutate(group = if_else(is.na(group), "Total", group))
 
-# Create indicators.csv if missing
+# Write indicators.csv if missing
 if (!file.exists("indicators.csv")) {
   indicator_template <- all_data %>%
-    distinct(indicator, unit) %>%
+    distinct(indicator, unit, source) %>%
     arrange(indicator) %>%
     mutate(
       new_indicator = "",
@@ -245,21 +226,25 @@ if (!file.exists("indicators.csv")) {
   stop("🛑 Edit 'indicators.csv' before continuing. Then re-run this script.")
 }
 
-# Create groups.csv if missing
-# Load indicators.csv
-indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE) %>%
-  rename(unit_meta = unit)
+# Load indicator metadata
+indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE)
 
-# Filter out excluded indicators before generating groups.csv
+# Filter by included indicators only
 included_indicators <- indicator_meta %>%
-  filter(is.na(exclude) | tolower(exclude) != "yes") %>%
-  pull(indicator) %>%
-  clean_indicator()
+  filter(is.na(exclude) | tolower(exclude) != "yes")
 
 filtered_data <- all_data %>%
-  filter(indicator %in% included_indicators)
+  inner_join(included_indicators,
+             by = c("indicator", "unit", "source")) %>%
+  mutate(
+    indicator = if_else(new_indicator != "", new_indicator, indicator),
+    category = if_else(category == "", "Uncategorized", category),
+    subcategory = if_else(subcategory == "", "Uncategorized", subcategory),
+    description = if_else(description == "", "No description yet", description)
+  ) %>%
+  select(year, group, indicator, value, lower, upper, unit, source, category, subcategory, description)
 
-# Create groups.csv if missing, using only relevant groups
+# groups.csv
 if (!file.exists("groups.csv")) {
   group_template <- filtered_data %>%
     distinct(group) %>%
@@ -270,30 +255,13 @@ if (!file.exists("groups.csv")) {
   stop("🛑 Edit 'groups.csv' before continuing. Then re-run this script.")
 }
 
-
-# Load metadata
-indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE) %>%
-  rename(unit_meta = unit)
 group_meta <- read_csv("groups.csv", show_col_types = FALSE)
 
-# Apply renames and exclusions
-all_data_final <- all_data %>%
-  left_join(indicator_meta, by = "indicator") %>%
-  filter(is.na(exclude) | exclude != "yes") %>%
-  mutate(
-    unit = if_else(!is.na(unit_meta) & unit_meta != "", unit_meta, unit)
-  ) %>%
-  select(-unit_meta) %>%
+# Apply group renames
+final_data <- filtered_data %>%
   left_join(group_meta, by = "group") %>%
-  mutate(
-    indicator = if_else(!is.na(new_indicator) & new_indicator != "", new_indicator, indicator),
-    group = if_else(!is.na(new_group) & new_group != "", new_group, group),
-    category = if_else(is.na(category) | category == "", "Uncategorized", category),
-    subcategory = if_else(is.na(subcategory) | subcategory == "", "Uncategorized", subcategory),
-    description = if_else(is.na(description) | description == "", "No description yet", description)
-  ) %>%
-  select(year, group, indicator, value, lower, upper, unit, category, subcategory, description) %>%
+  mutate(group = if_else(!is.na(new_group) & new_group != "", new_group, group)) %>%
   arrange(year)
 
-write_csv(all_data_final, "data.csv")
-message("🎉 Done! Final dataset saved as data.csv with ", nrow(all_data_final), " rows.")
+write_csv(final_data, "data.csv")
+message("🎉 Done! Final dataset saved as data.csv with ", nrow(final_data), " rows.")
