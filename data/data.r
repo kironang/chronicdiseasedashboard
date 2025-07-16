@@ -126,7 +126,7 @@ process_file <- function(file_path) {
   data_long <- data_raw %>%
     pivot_longer(cols = -year, names_to = "col_name", values_to = "val_raw") %>%
     left_join(col_info, by = "col_name") %>%
-    mutate(value_num = suppressWarnings(as.numeric(val_raw))) %>%
+    mutate(value_num = as.numeric(val_raw)) %>%
     select(-val_raw)
   
   data_wide <- data_long %>%
