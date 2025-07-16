@@ -1,3 +1,5 @@
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 library(tidyverse)
 library(jsonlite)
 library(stringr)
