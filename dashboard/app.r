@@ -51,11 +51,15 @@ ui <- fluidPage(
   div(class = "container",
       titlePanel("McLennan County Dashboard"),
       tabsetPanel(type = "tabs",
-                  tabPanel("Population & Access",
+                  tabPanel("Health",
                            div(class = "card",
                                fluidRow(
                                  column(12, selectInput("category1", "Select Category",
-                                                        choices = unique(data$category))),
+                                                        choices = sort(c("Population Health",
+                                                                         "Access to Care",
+                                                                         "Childcare and Education",
+                                                                         "Demographics",
+                                                                         "No Category")))),
                                  column(12, uiOutput("indicator_ui1")),
                                  column(4, uiOutput("age_ui1")),
                                  column(4, uiOutput("sex_ui1")),
@@ -70,7 +74,7 @@ ui <- fluidPage(
                            div(class = "card",
                                fluidRow(
                                  column(12, selectInput("category2", "Select Category",
-                                                        choices = unique(data$category))),
+                                                        choices = sort(c("Mortality")))),
                                  column(12, uiOutput("indicator_ui2")),
                                  column(4, uiOutput("age_ui2")),
                                  column(4, uiOutput("sex_ui2")),
@@ -81,11 +85,11 @@ ui <- fluidPage(
                                )
                            )
                   ),
-                  tabPanel("Disease & Lifestyle",
+                  tabPanel("Risk Factors",
                            div(class = "card",
                                fluidRow(
                                  column(12, selectInput("category3", "Select Category",
-                                                        choices = unique(data$category))),
+                                                        choices = sort(c("Risk Factors")))),
                                  column(12, uiOutput("indicator_ui3")),
                                  column(4, uiOutput("age_ui3")),
                                  column(4, uiOutput("sex_ui3")),
@@ -119,39 +123,42 @@ server <- function(input, output, session) {
   # Panel 1
   filtered_indicators1 <- reactive({
     req(input$category1)
-    data %>% filter(category == input$category1) %>% distinct(indicator) %>% pull()
+    sort(data %>% filter(category == input$category1) %>% distinct(indicator) %>% pull())
   })
   output$indicator_ui1 <- renderUI({
     selectInput("indicator1", "Select Indicator", choices = filtered_indicators1())
   })
   output$age_ui1 <- renderUI({
     req(input$indicator1)
-    selectInput("age1", "Select Age", choices = data %>% filter(indicator == input$indicator1) %>% distinct(age) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator1) %>% distinct(age) %>% pull()
+    selectInput("age1", "Select Age", choices = sort(choices))
   })
   output$sex_ui1 <- renderUI({
     req(input$indicator1)
-    selectInput("sex1", "Select Sex", choices = data %>% filter(indicator == input$indicator1) %>% distinct(sex) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator1) %>% distinct(sex) %>% pull()
+    selectInput("sex1", "Select Sex", choices = sort(choices))
   })
   output$race_ui1 <- renderUI({
     req(input$indicator1)
-    selectInput("race1", "Select Race", choices = data %>% filter(indicator == input$indicator1) %>% distinct(race) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator1) %>% distinct(race) %>% pull()
+    selectInput("race1", "Select Race", choices = sort(choices))
   })
   filtered_years1 <- reactive({
     req(input$indicator1, input$age1, input$sex1, input$race1)
-    data %>%
-      filter(indicator == input$indicator1,
-             age == input$age1,
-             sex == input$sex1,
-             race == input$race1) %>%
-      distinct(year) %>% pull()
+    sort(data %>%
+           filter(indicator == input$indicator1,
+                  age == input$age1,
+                  sex == input$sex1,
+                  race == input$race1) %>%
+           distinct(year) %>% pull())
   })
   output$year_ui1 <- renderUI({
     req(filtered_years1())
     dropdownButton(
       label = "Select Years", status = "primary", circle = FALSE,
       checkboxGroupInput("years1", "Years",
-                         choices = sort(filtered_years1()),
-                         selected = sort(filtered_years1()))
+                         choices = filtered_years1(),
+                         selected = filtered_years1())
     )
   })
   output$plot1 <- renderPlotly({
@@ -184,39 +191,42 @@ server <- function(input, output, session) {
   # Panel 2
   filtered_indicators2 <- reactive({
     req(input$category2)
-    data %>% filter(category == input$category2) %>% distinct(indicator) %>% pull()
+    sort(data %>% filter(category == input$category2) %>% distinct(indicator) %>% pull())
   })
   output$indicator_ui2 <- renderUI({
     selectInput("indicator2", "Select Indicator", choices = filtered_indicators2())
   })
   output$age_ui2 <- renderUI({
     req(input$indicator2)
-    selectInput("age2", "Select Age", choices = data %>% filter(indicator == input$indicator2) %>% distinct(age) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator2) %>% distinct(age) %>% pull()
+    selectInput("age2", "Select Age", choices = sort(choices))
   })
   output$sex_ui2 <- renderUI({
     req(input$indicator2)
-    selectInput("sex2", "Select Sex", choices = data %>% filter(indicator == input$indicator2) %>% distinct(sex) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator2) %>% distinct(sex) %>% pull()
+    selectInput("sex2", "Select Sex", choices = sort(choices))
   })
   output$race_ui2 <- renderUI({
     req(input$indicator2)
-    selectInput("race2", "Select Race", choices = data %>% filter(indicator == input$indicator2) %>% distinct(race) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator2) %>% distinct(race) %>% pull()
+    selectInput("race2", "Select Race", choices = sort(choices))
   })
   filtered_years2 <- reactive({
     req(input$indicator2, input$age2, input$sex2, input$race2)
-    data %>%
-      filter(indicator == input$indicator2,
-             age == input$age2,
-             sex == input$sex2,
-             race == input$race2) %>%
-      distinct(year) %>% pull()
+    sort(data %>%
+           filter(indicator == input$indicator2,
+                  age == input$age2,
+                  sex == input$sex2,
+                  race == input$race2) %>%
+           distinct(year) %>% pull())
   })
   output$year_ui2 <- renderUI({
     req(filtered_years2())
     dropdownButton(
       label = "Select Years", status = "primary", circle = FALSE,
       checkboxGroupInput("years2", "Years",
-                         choices = sort(filtered_years2()),
-                         selected = sort(filtered_years2()))
+                         choices = filtered_years2(),
+                         selected = filtered_years2())
     )
   })
   output$plot2 <- renderPlotly({
@@ -249,39 +259,42 @@ server <- function(input, output, session) {
   # Panel 3
   filtered_indicators3 <- reactive({
     req(input$category3)
-    data %>% filter(category == input$category3) %>% distinct(indicator) %>% pull()
+    sort(data %>% filter(category == input$category3) %>% distinct(indicator) %>% pull())
   })
   output$indicator_ui3 <- renderUI({
     selectInput("indicator3", "Select Indicator", choices = filtered_indicators3())
   })
   output$age_ui3 <- renderUI({
     req(input$indicator3)
-    selectInput("age3", "Select Age", choices = data %>% filter(indicator == input$indicator3) %>% distinct(age) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator3) %>% distinct(age) %>% pull()
+    selectInput("age3", "Select Age", choices = sort(choices))
   })
   output$sex_ui3 <- renderUI({
     req(input$indicator3)
-    selectInput("sex3", "Select Sex", choices = data %>% filter(indicator == input$indicator3) %>% distinct(sex) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator3) %>% distinct(sex) %>% pull()
+    selectInput("sex3", "Select Sex", choices = sort(choices))
   })
   output$race_ui3 <- renderUI({
     req(input$indicator3)
-    selectInput("race3", "Select Race", choices = data %>% filter(indicator == input$indicator3) %>% distinct(race) %>% pull())
+    choices <- data %>% filter(indicator == input$indicator3) %>% distinct(race) %>% pull()
+    selectInput("race3", "Select Race", choices = sort(choices))
   })
   filtered_years3 <- reactive({
     req(input$indicator3, input$age3, input$sex3, input$race3)
-    data %>%
-      filter(indicator == input$indicator3,
-             age == input$age3,
-             sex == input$sex3,
-             race == input$race3) %>%
-      distinct(year) %>% pull()
+    sort(data %>%
+           filter(indicator == input$indicator3,
+                  age == input$age3,
+                  sex == input$sex3,
+                  race == input$race3) %>%
+           distinct(year) %>% pull())
   })
   output$year_ui3 <- renderUI({
     req(filtered_years3())
     dropdownButton(
       label = "Select Years", status = "primary", circle = FALSE,
       checkboxGroupInput("years3", "Years",
-                         choices = sort(filtered_years3()),
-                         selected = sort(filtered_years3()))
+                         choices = filtered_years3(),
+                         selected = filtered_years3())
     )
   })
   output$plot3 <- renderPlotly({
