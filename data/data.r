@@ -2,6 +2,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(tidyverse)
 library(jsonlite)
 library(stringr)
+
 clean_indicator <- function(x) {
   x %>%
     str_trim() %>%
@@ -10,6 +11,7 @@ clean_indicator <- function(x) {
     str_to_lower() %>%
     str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x))
 }
+
 safe_numeric <- function(x, quiet = FALSE) {
   x[x %in% c("TX", "McLennan County", "NA")] <- NA
   suppressWarnings({
@@ -23,6 +25,7 @@ safe_numeric <- function(x, quiet = FALSE) {
   }
   x_num
 }
+
 safe_integer <- function(x, quiet = FALSE) {
   bad_strings <- c("1999 - 2010", "2010 - 2019")
   x[x %in% bad_strings] <- NA
@@ -37,6 +40,7 @@ safe_integer <- function(x, quiet = FALSE) {
   }
   x_int
 }
+
 countyhealthrankings_links <- c(
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv",
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2024.csv",
@@ -55,10 +59,9 @@ countyhealthrankings_links <- c(
   "https://www.countyhealthrankings.org/sites/default/files/analytic_data2011.csv",
   "https://www.countyhealthrankings.org/sites/default/files/analytic_data2010.csv"
 )
+
 countyhealthrankings <- function(url) {
-  chr_data <- tryCatch(read_csv(url, show_col_types = FALSE), error = function(e) {
-    return(NULL)
-  })
+  chr_data <- tryCatch(read_csv(url, show_col_types = FALSE), error = function(e) return(NULL))
   if (is.null(chr_data)) return(NULL)
   chr_data <- chr_data %>% select(!matches("=")) %>% filter(Name == "McLennan County")
   long_data <- chr_data %>%
@@ -76,21 +79,26 @@ countyhealthrankings <- function(url) {
         str_detect(raw_col, "\\)$") & !str_detect(raw_col, "CI") ~ "value",
         TRUE ~ NA_character_
       ),
-      group = str_match(raw_col, "\\(([^)]+)\\)")[, 2]
+      race = str_match(raw_col, "\\(([^)]+)\\)")[, 2]
     ) %>%
     filter(!is.na(measure) & !is.na(indicator)) %>%
-    select(`Release Year`, indicator, group, measure, value)
+    select(`Release Year`, indicator, race, measure, value)
+
   wide_data <- parsed_data %>%
     pivot_wider(names_from = measure, values_from = value) %>%
     mutate(
       year = as.integer(`Release Year`),
+      age = NA_character_,
+      sex = NA_character_,
       unit = "value",
       source = "CHR"
     ) %>%
-    select(year, group, indicator, value, lower, upper, unit, source) %>%
-    arrange(year, indicator, group)
+    select(year, age, sex, race, indicator, value, lower, upper, unit, source) %>%
+    arrange(year, indicator, race)
+
   return(wide_data)
 }
+
 diabetesatlas <- function(file_path) {
   lines <- readLines(file_path)
   metadata_line <- lines[1]
@@ -100,17 +108,19 @@ diabetesatlas <- function(file_path) {
   data_start_line <- which(grepl("^Year,", lines))
   data_raw <- read.csv(file_path, skip = data_start_line - 1, header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
   data_raw <- data_raw[, colnames(data_raw) != ""]
-  data_raw <- data_raw %>% filter(!grepl("^US Diabetes Surveillance System", data_raw[[1]]))
+
   colnames(data_raw)[1] <- "year"
   data_raw$year <- as.integer(data_raw$year)
   data_cols <- colnames(data_raw)[-1]
+
   parts <- str_match(data_cols, "^(.*) - (.*)$")
-    col_info <- data.frame(
+  col_info <- data.frame(
     col_name = data_cols,
     group = str_trim(parts[, 2]),
     measure_raw = tolower(str_trim(parts[, 3])),
     stringsAsFactors = FALSE
   )
+
   measure_map <- c(
     "percentage" = "value",
     "rate per 1000" = "value",
@@ -120,32 +130,46 @@ diabetesatlas <- function(file_path) {
   )
   col_info$measure <- measure_map[col_info$measure_raw]
   col_info$measure[is.na(col_info$measure)] <- col_info$measure_raw[is.na(col_info$measure)]
+
   data_long <- data_raw %>%
     pivot_longer(cols = -year, names_to = "col_name", values_to = "val_raw") %>%
     left_join(col_info, by = "col_name") %>%
     mutate(value_num = safe_numeric(val_raw)) %>%
     select(-val_raw)
+
   data_wide <- data_long %>%
     select(year, group, measure, value_num) %>%
-    pivot_wider(names_from = measure, values_from = value_num) %>%
-    arrange(year, group)
+    pivot_wider(names_from = measure, values_from = value_num)
+
   data_final <- data_wide %>%
     mutate(
-      group = ifelse(str_detect(group, "^\\d"), paste0("Ages ", group), group),
+      age = ifelse(str_detect(group, "^(\\d{1,2}-\\d{1,2}|65\\+)"), group, NA_character_),
+      sex = ifelse(str_detect(group, "\\b(Male|Female)\\b"), group, NA_character_),
+      race = ifelse(group %in% c("Black", "White", "Hispanic", "Asian", "American Indian/Alaska Native"), group, NA_character_),
+      age = ifelse(str_detect(group, "^Ages "), str_remove(group, "^Ages "), age),
+      sex = ifelse(sex == group, sex, NA_character_),
+      race = ifelse(race == group, race, NA_character_),
+      age = ifelse(group == "Total", NA_character_, age),
+      sex = ifelse(group == "Total", NA_character_, sex),
+      race = ifelse(group == "Total", NA_character_, race),
       indicator = indicator,
       unit = unit,
       source = "DiabetesAtlas"
     ) %>%
-    select(year, group, indicator, value, lower, upper, unit, source)
+    select(year, age, sex, race, indicator, value, lower, upper, unit, source)
+
   return(data_final)
 }
+
 heartdiseasestrokemortality <- function() {
   url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000&$order=year"
   json_data <- fromJSON(url)
   json_data %>%
     transmute(
       year = safe_integer(year),
-      group = paste(stratification1, stratification2, stratification3, sep = " - "),
+      age = stratification1,
+      race = stratification2,
+      sex = stratification3,
       value = safe_numeric(data_value),
       lower = safe_numeric(confidence_limit_low),
       upper = safe_numeric(confidence_limit_high),
@@ -155,6 +179,7 @@ heartdiseasestrokemortality <- function() {
     ) %>%
     distinct()
 }
+
 places <- function() {
   urls <- c(
     "https://data.cdc.gov/resource/swc5-untb.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
@@ -167,23 +192,25 @@ places <- function() {
     json_data <- fromJSON(url)
     json_data %>%
       mutate(
-        indicator = str_replace(measure, " aged.*", ""),
-        group = NA_character_
+        indicator = str_replace(measure, " aged.*", "")
       ) %>%
       transmute(
         year = as.integer(year),
-        group,
+        age = NA_character_,
+        sex = NA_character_,
+        race = NA_character_,
         value = safe_numeric(data_value),
         lower = safe_numeric(low_confidence_limit),
         upper = safe_numeric(high_confidence_limit),
         indicator = str_trim(indicator),
-        unit = data_value_unit,
+        unit = paste(data_value_unit, data_value_type),
         source = "PLACES"
       ) %>%
       distinct()
   })
   bind_rows(places_list)
 }
+
 ensure_final_newline <- function(file_path) {
   con <- file(file_path, open = "rb")
   raw_data <- readBin(con, what = "raw", n = file.info(file_path)$size)
@@ -192,18 +219,21 @@ ensure_final_newline <- function(file_path) {
     cat("\n", file = file_path, append = TRUE)
   }
 }
+
 files <- list.files(pattern = "^DiabetesAtlas")
 walk(files, ensure_final_newline)
+
 diabetesatlas_data <- map_dfr(files, diabetesatlas)
 hdsm_data <- heartdiseasestrokemortality()
 places_data <- places()
 chr_data <- map_dfr(countyhealthrankings_links, countyhealthrankings)
+
 all_data <- bind_rows(diabetesatlas_data, hdsm_data, places_data, chr_data) %>%
   mutate(
-    indicator = clean_indicator(indicator),
-    group = if_else(is.na(group), "Total", group)
+    indicator = clean_indicator(indicator)
   ) %>%
   filter(!is.na(year) & !is.na(value))
+
 if (!file.exists("indicators.csv")) {
   message("📄 indicators.csv not found — creating template...")
   indicator_template <- all_data %>%
@@ -211,7 +241,6 @@ if (!file.exists("indicators.csv")) {
     arrange(indicator) %>%
     rowwise() %>%
     mutate(
-      groups = paste(sort(unique(all_data$group[all_data$indicator == indicator & all_data$unit == unit & all_data$source == source])), collapse = "; "),
       new_indicator = "",
       new_unit = "",
       category = "",
@@ -222,13 +251,16 @@ if (!file.exists("indicators.csv")) {
     ungroup()
   write_csv(indicator_template, "indicators.csv")
 }
+
 indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE)
 included_indicators <- indicator_meta %>%
   filter(is.na(exclude) | tolower(exclude) != "yes")
+
 unmatched <- anti_join(all_data, included_indicators, by = c("indicator", "unit", "source"))
 if (nrow(unmatched) > 0) {
   print(unmatched %>% distinct(indicator, unit, source), n = 100)
 }
+
 filtered_data <- all_data %>%
   inner_join(included_indicators, by = c("indicator", "unit", "source")) %>%
   mutate(
@@ -238,18 +270,6 @@ filtered_data <- all_data %>%
     subcategory = if_else(!is.na(subcategory), subcategory, "No Subcategory"),
     description = if_else(!is.na(description), description, "No Description")
   ) %>%
-  select(year, group, indicator, value, lower, upper, unit, source, category, subcategory, description)
-if (!file.exists("groups.csv")) {
-  group_template <- filtered_data %>%
-    distinct(group) %>%
-    arrange(group) %>%
-    mutate(new_group = "")
-  write_csv(group_template, "groups.csv")
-}
-group_meta <- read_csv("groups.csv", show_col_types = FALSE)
-final_data <- filtered_data %>%
-  left_join(group_meta, by = "group") %>%
-  mutate(group = if_else(!is.na(new_group) & new_group != "", new_group, group)) %>%
-  select(-new_group) %>%
-  arrange(year)
-write_csv(final_data, "data.csv")
+  select(year, age, sex, race, indicator, value, lower, upper, unit, source, category, subcategory, description)
+
+write_csv(filtered_data, "data.csv")
