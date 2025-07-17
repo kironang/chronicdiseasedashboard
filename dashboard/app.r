@@ -3,10 +3,7 @@ library(plotly)
 library(dplyr)
 library(readr)
 library(shinyWidgets)
-
-# Load data
 data <- read_csv("../data/data.csv")
-
 ui <- fluidPage(
   tags$head(
     tags$style(HTML("
@@ -49,22 +46,18 @@ ui <- fluidPage(
       }
     "))
   ),
-  
   div(class = "container",
-      titlePanel("📊 Health Data Explorer"),
-      
+      titlePanel("McLennan County Dashboard"),
       tabsetPanel(type = "tabs",
-                  
-                  # Section 1
                   tabPanel("Population & Access",
                            div(class = "card",
                                fluidRow(
                                  column(12,
-                                        selectInput("category1", "Select Category", 
-                                                    choices = c("Social Determinants of Health", 
-                                                                "Childcare and Education", 
-                                                                "Access to Care", 
-                                                                "Population Health", 
+                                        selectInput("category1", "Select Category",
+                                                    choices = c("Social Determinants of Health",
+                                                                "Childcare and Education",
+                                                                "Access to Care",
+                                                                "Population Health",
                                                                 "Demographics"))
                                  ),
                                  column(12, uiOutput("indicator_ui1")),
@@ -75,8 +68,6 @@ ui <- fluidPage(
                                )
                            )
                   ),
-                  
-                  # Section 2
                   tabPanel("Mortality",
                            div(class = "card",
                                fluidRow(
@@ -89,8 +80,6 @@ ui <- fluidPage(
                                )
                            )
                   ),
-                  
-                  # Section 3
                   tabPanel("Disease & Lifestyle",
                            div(class = "card",
                                fluidRow(
@@ -103,8 +92,6 @@ ui <- fluidPage(
                                )
                            )
                   ),
-                  
-                  # Section 4
                   tabPanel("More Information",
                            div(class = "card",
                                h3("About this Dashboard"),
@@ -114,10 +101,7 @@ ui <- fluidPage(
       )
   )
 )
-
 server <- function(input, output, session) {
-  
-  # Updated helper: now uses indicator + group
   get_unit_source <- function(ind, grp) {
     d <- data %>% filter(indicator == ind, group == grp)
     unit <- unique(d$unit)
@@ -126,8 +110,6 @@ server <- function(input, output, session) {
     source <- if(length(source) == 1) source else ""
     list(unit = unit, source = source)
   }
-  
-  # -------- Section 1 --------
   filtered_indicators1 <- reactive({
     req(input$category1)
     data %>%
@@ -135,11 +117,9 @@ server <- function(input, output, session) {
       distinct(indicator) %>%
       pull()
   })
-  
   output$indicator_ui1 <- renderUI({
     selectInput("indicator1", "Select Indicator", choices = filtered_indicators1())
   })
-  
   filtered_groups1 <- reactive({
     req(input$indicator1)
     data %>%
@@ -147,11 +127,9 @@ server <- function(input, output, session) {
       distinct(group) %>%
       pull()
   })
-  
   output$group_ui1 <- renderUI({
     selectInput("group1", "Select Group", choices = filtered_groups1())
   })
-  
   filtered_years1 <- reactive({
     req(input$indicator1, input$group1)
     data %>%
@@ -159,7 +137,6 @@ server <- function(input, output, session) {
       distinct(year) %>%
       pull()
   })
-  
   output$year_ui1 <- renderUI({
     req(filtered_years1())
     dropdownButton(
@@ -169,7 +146,6 @@ server <- function(input, output, session) {
                          selected = sort(filtered_years1()))
     )
   })
-  
   output$plot1 <- renderPlotly({
     req(input$years1)
     plot_data <- data %>%
@@ -177,10 +153,8 @@ server <- function(input, output, session) {
              group == input$group1,
              year %in% input$years1) %>%
       arrange(year)
-    
     us <- get_unit_source(input$indicator1, input$group1)
     title_text <- paste0(input$indicator1, ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
-    
     plot_ly(plot_data, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
             name = 'Value', line = list(color = '#2C3E50')) %>%
       add_ribbons(ymin = ~lower, ymax = ~upper,
@@ -191,14 +165,11 @@ server <- function(input, output, session) {
              yaxis = list(title = "Value"),
              xaxis = list(title = "Year", dtick = 1))
   })
-  
   output$source1 <- renderText({
     req(input$indicator1, input$group1)
     us <- get_unit_source(input$indicator1, input$group1)
     if(us$source != "") paste("Source:", us$source) else ""
   })
-  
-  # -------- Section 2 --------
   filtered_indicators2 <- reactive({
     req(input$category2)
     data %>%
@@ -206,11 +177,9 @@ server <- function(input, output, session) {
       distinct(indicator) %>%
       pull()
   })
-  
   output$indicator_ui2 <- renderUI({
     selectInput("indicator2", "Select Indicator", choices = filtered_indicators2())
   })
-  
   filtered_groups2 <- reactive({
     req(input$indicator2)
     data %>%
@@ -218,11 +187,9 @@ server <- function(input, output, session) {
       distinct(group) %>%
       pull()
   })
-  
   output$group_ui2 <- renderUI({
     selectInput("group2", "Select Group", choices = filtered_groups2())
   })
-  
   filtered_years2 <- reactive({
     req(input$indicator2, input$group2)
     data %>%
@@ -230,7 +197,6 @@ server <- function(input, output, session) {
       distinct(year) %>%
       pull()
   })
-  
   output$year_ui2 <- renderUI({
     req(filtered_years2())
     dropdownButton(
@@ -240,7 +206,6 @@ server <- function(input, output, session) {
                          selected = sort(filtered_years2()))
     )
   })
-  
   output$plot2 <- renderPlotly({
     req(input$years2)
     plot_data <- data %>%
@@ -248,10 +213,8 @@ server <- function(input, output, session) {
              group == input$group2,
              year %in% input$years2) %>%
       arrange(year)
-    
     us <- get_unit_source(input$indicator2, input$group2)
     title_text <- paste0(input$indicator2, ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
-    
     plot_ly(plot_data, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
             name = 'Value', line = list(color = '#C0392B')) %>%
       add_ribbons(ymin = ~lower, ymax = ~upper,
@@ -262,14 +225,11 @@ server <- function(input, output, session) {
              yaxis = list(title = "Value"),
              xaxis = list(title = "Year", dtick = 1))
   })
-  
   output$source2 <- renderText({
     req(input$indicator2, input$group2)
     us <- get_unit_source(input$indicator2, input$group2)
     if(us$source != "") paste("Source:", us$source) else ""
   })
-  
-  # -------- Section 3 --------
   filtered_indicators3 <- reactive({
     req(input$category3)
     data %>%
@@ -277,11 +237,9 @@ server <- function(input, output, session) {
       distinct(indicator) %>%
       pull()
   })
-  
   output$indicator_ui3 <- renderUI({
     selectInput("indicator3", "Select Indicator", choices = filtered_indicators3())
   })
-  
   filtered_groups3 <- reactive({
     req(input$indicator3)
     data %>%
@@ -289,11 +247,9 @@ server <- function(input, output, session) {
       distinct(group) %>%
       pull()
   })
-  
   output$group_ui3 <- renderUI({
     selectInput("group3", "Select Group", choices = filtered_groups3())
   })
-  
   filtered_years3 <- reactive({
     req(input$indicator3, input$group3)
     data %>%
@@ -301,7 +257,6 @@ server <- function(input, output, session) {
       distinct(year) %>%
       pull()
   })
-  
   output$year_ui3 <- renderUI({
     req(filtered_years3())
     dropdownButton(
@@ -311,7 +266,6 @@ server <- function(input, output, session) {
                          selected = sort(filtered_years3()))
     )
   })
-  
   output$plot3 <- renderPlotly({
     req(input$years3)
     plot_data <- data %>%
@@ -319,10 +273,8 @@ server <- function(input, output, session) {
              group == input$group3,
              year %in% input$years3) %>%
       arrange(year)
-    
     us <- get_unit_source(input$indicator3, input$group3)
     title_text <- paste0(input$indicator3, ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
-    
     plot_ly(plot_data, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
             name = 'Value', line = list(color = '#2980B9')) %>%
       add_ribbons(ymin = ~lower, ymax = ~upper,
@@ -333,12 +285,10 @@ server <- function(input, output, session) {
              yaxis = list(title = "Value"),
              xaxis = list(title = "Year", dtick = 1))
   })
-  
   output$source3 <- renderText({
     req(input$indicator3, input$group3)
     us <- get_unit_source(input$indicator3, input$group3)
     if(us$source != "") paste("Source:", us$source) else ""
   })
 }
-
 shinyApp(ui = ui, server = server)

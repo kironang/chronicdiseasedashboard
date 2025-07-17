@@ -1,4 +1,4 @@
-# Chronic Disease Dashboard
+# McLennan County Dashboard
 Kiron created this public health dashboard for a Summer 2025 internship with the Waco-McLennan Public Health District. It relies on the R programming language and the Shiny application framework. It also features the GNU Affero General Public License v3.0.
 
 Kiron tested the code in this repository with version 4.5.1 of the R programming language. Additionally, Kiron compiled the data from several different online sources:
@@ -12,4 +12,4 @@ Kiron tested the code in this repository with version 4.5.1 of the R programming
 - https://www.countyhealthrankings.org/health-data/methodology-and-sources/data-documentation
 - https://www.countyhealthrankings.org/health-data/methodology-and-sources/data-documentation/national-data-documentation-2010-2023
 
-This repository represents the code corresponding to version 0.1.0. View this repository online at https://github.com/kironang/chronicdiseasedashboard.
+This repository represents the code corresponding to version 0.1.0. View this repository online at https://github.com/kironang.
