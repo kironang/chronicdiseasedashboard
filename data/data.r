@@ -10,6 +10,33 @@ clean_indicator <- function(x) {
     str_to_lower() %>%
     str_replace_all("(^|[\\s-])([a-z])", ~ toupper(.x))
 }
+safe_numeric <- function(x, quiet = FALSE) {
+  x[x %in% c("TX", "McLennan County", "NA")] <- NA
+  suppressWarnings({
+    x_num <- as.numeric(x)
+  })
+  if (!quiet) {
+    bad_vals <- unique(x[is.na(x_num) & !is.na(x)])
+    if (length(bad_vals) > 0) {
+      warning("Some values could not be converted to numeric: ", paste(bad_vals, collapse = ", "))
+    }
+  }
+  x_num
+}
+safe_integer <- function(x, quiet = FALSE) {
+  bad_strings <- c("1999 - 2010", "2010 - 2019")
+  x[x %in% bad_strings] <- NA
+  suppressWarnings({
+    x_int <- as.integer(x)
+  })
+  if (!quiet) {
+    bad_vals <- unique(x[is.na(x_int) & !is.na(x)])
+    if (length(bad_vals) > 0) {
+      warning("Some values could not be converted to integer: ", paste(bad_vals, collapse = ", "))
+    }
+  }
+  x_int
+}
 countyhealthrankings_links <- c(
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv",
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2024.csv",
@@ -39,7 +66,7 @@ countyhealthrankings <- function(url) {
     filter(!is.na(value))
   parsed_data <- long_data %>%
     mutate(
-      value = as.numeric(value),
+      value = safe_numeric(value),
       raw_col = str_trim(raw_col),
       indicator = str_match(raw_col, "^(.+?)(?: (?:CI low|CI high|raw value))?(?: \\([^)]+\\))?$")[, 2],
       measure = case_when(
@@ -96,7 +123,7 @@ diabetesatlas <- function(file_path) {
   data_long <- data_raw %>%
     pivot_longer(cols = -year, names_to = "col_name", values_to = "val_raw") %>%
     left_join(col_info, by = "col_name") %>%
-    mutate(value_num = as.numeric(val_raw)) %>%
+    mutate(value_num = safe_numeric(val_raw)) %>%
     select(-val_raw)
   data_wide <- data_long %>%
     select(year, group, measure, value_num) %>%
@@ -117,11 +144,11 @@ heartdiseasestrokemortality <- function() {
   json_data <- fromJSON(url)
   json_data %>%
     transmute(
-      year = as.integer(year),
+      year = safe_integer(year),
       group = paste(stratification1, stratification2, stratification3, sep = " - "),
-      value = as.numeric(data_value),
-      lower = as.numeric(confidence_limit_low),
-      upper = as.numeric(confidence_limit_high),
+      value = safe_numeric(data_value),
+      lower = safe_numeric(confidence_limit_low),
+      upper = safe_numeric(confidence_limit_high),
       indicator = topic,
       unit = data_value_unit,
       source = "CDC Stroke"
@@ -146,9 +173,9 @@ places <- function() {
       transmute(
         year = as.integer(year),
         group,
-        value = as.numeric(data_value),
-        lower = as.numeric(low_confidence_limit),
-        upper = as.numeric(high_confidence_limit),
+        value = safe_numeric(data_value),
+        lower = safe_numeric(low_confidence_limit),
+        upper = safe_numeric(high_confidence_limit),
         indicator = str_trim(indicator),
         unit = data_value_unit,
         source = "PLACES"
