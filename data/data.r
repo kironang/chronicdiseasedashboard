@@ -90,7 +90,7 @@ countyhealthrankings <- function(url) {
       year = safe_integer(`Release Year`),
       age = NA_character_,
       sex = NA_character_,
-      unit = "value",
+      unit = if_else(str_detect(indicator, "%"), "Percentage", "Raw Count"),
       source = "CHR"
     ) %>%
     select(year, age, sex, race, indicator, value, lower, upper, unit, source) %>%
@@ -104,7 +104,7 @@ diabetesatlas <- function(file_path) {
   metadata_line <- lines[1]
   metadata_values <- trimws(unlist(strsplit(metadata_line, ";")))
   indicator <- metadata_values[1]
-  unit <- metadata_values[4]
+  unit <- paste(metadata_values[4], metadata_values[3], sep = ", ")
   data_start_line <- which(grepl("^Year,", lines))
   data_raw <- read.csv(file_path, skip = data_start_line - 1, header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
   data_raw <- data_raw[1:nrow(data_raw) - 1, colnames(data_raw) != ""]
@@ -174,7 +174,7 @@ heartdiseasestrokemortality <- function() {
       lower = safe_numeric(confidence_limit_low),
       upper = safe_numeric(confidence_limit_high),
       indicator = topic,
-      unit = data_value_unit,
+      unit = paste(data_value_type, data_value_unit, sep = ", "),
       source = "HDSM"
     ) %>%
     distinct()
@@ -203,7 +203,7 @@ places <- function() {
         lower = safe_numeric(low_confidence_limit),
         upper = safe_numeric(high_confidence_limit),
         indicator = str_trim(indicator),
-        unit = paste(data_value_unit, data_value_type),
+        unit = paste(data_value_type, data_value_unit, sep = ", "),
         source = "PLACES"
       ) %>%
       distinct()
