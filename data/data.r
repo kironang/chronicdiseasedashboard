@@ -87,7 +87,7 @@ countyhealthrankings <- function(url) {
   wide_data <- parsed_data %>%
     pivot_wider(names_from = measure, values_from = value) %>%
     mutate(
-      year = as.integer(`Release Year`),
+      year = safe_integer(`Release Year`),
       age = NA_character_,
       sex = NA_character_,
       unit = "value",
@@ -107,10 +107,10 @@ diabetesatlas <- function(file_path) {
   unit <- metadata_values[4]
   data_start_line <- which(grepl("^Year,", lines))
   data_raw <- read.csv(file_path, skip = data_start_line - 1, header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
-  data_raw <- data_raw[, colnames(data_raw) != ""]
+  data_raw <- data_raw[1:nrow(data_raw) - 1, colnames(data_raw) != ""]
 
   colnames(data_raw)[1] <- "year"
-  data_raw$year <- as.integer(data_raw$year)
+  data_raw$year <- safe_integer(data_raw$year)
   data_cols <- colnames(data_raw)[-1]
 
   parts <- str_match(data_cols, "^(.*) - (.*)$")
@@ -154,7 +154,7 @@ diabetesatlas <- function(file_path) {
       race = ifelse(group == "Total", NA_character_, race),
       indicator = indicator,
       unit = unit,
-      source = "DiabetesAtlas"
+      source = "DA"
     ) %>%
     select(year, age, sex, race, indicator, value, lower, upper, unit, source)
 
@@ -175,7 +175,7 @@ heartdiseasestrokemortality <- function() {
       upper = safe_numeric(confidence_limit_high),
       indicator = topic,
       unit = data_value_unit,
-      source = "CDC Stroke"
+      source = "HDSM"
     ) %>%
     distinct()
 }
@@ -195,7 +195,7 @@ places <- function() {
         indicator = str_replace(measure, " aged.*", "")
       ) %>%
       transmute(
-        year = as.integer(year),
+        year = safe_integer(year),
         age = NA_character_,
         sex = NA_character_,
         race = NA_character_,
@@ -235,7 +235,7 @@ all_data <- bind_rows(diabetesatlas_data, hdsm_data, places_data, chr_data) %>%
   filter(!is.na(year) & !is.na(value))
 
 if (!file.exists("indicators.csv")) {
-  message("📄 indicators.csv not found — creating template...")
+  message("UNABLE TO LOCATE 'indicators.csv' IN THE CURRENT WORKING DIRECTORY, CREATING IT NOW...")
   indicator_template <- all_data %>%
     distinct(indicator, unit, source) %>%
     arrange(indicator) %>%
@@ -243,13 +243,14 @@ if (!file.exists("indicators.csv")) {
     mutate(
       new_indicator = "",
       new_unit = "",
+      exclude = "no",
       category = "",
       subcategory = "",
-      description = "",
-      exclude = "no"
+      description = ""
     ) %>%
     ungroup()
   write_csv(indicator_template, "indicators.csv")
+  stop("FILE CREATED SUCCESSFULLY. PLEASE COMPLETE 'indicators.csv'")
 }
 
 indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE)
