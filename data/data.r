@@ -1,14 +1,12 @@
-# CONFIGURATION
 county <- "McLennan"
+state_abbreviation <- "TX"
 use_diabetes_atlas <- TRUE
 
-# LIBRARIES
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(tidyverse)
 library(jsonlite)
 library(stringr)
 
-# UTILITIES
 clean_indicator <- function(x) {
   x %>%
     str_trim() %>%
@@ -19,8 +17,7 @@ clean_indicator <- function(x) {
 }
 
 safe_numeric <- function(x, quiet = FALSE) {
-  x[grepl("^[A-Z]{2}$", x)] <- NA  # Remove any 2-letter state codes
-  x[x == paste(county, "County")] <- NA            # Remove current county name
+  x[x == state_abbreviation | x == paste(county, "County") | x == "NA"] <- NA
   suppressWarnings({
     x_num <- as.numeric(x)
   })
@@ -48,7 +45,6 @@ safe_integer <- function(x, quiet = FALSE) {
   x_int
 }
 
-# COUNTY HEALTH RANKINGS
 countyhealthrankings_links <- c(
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv",
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2024.csv",
@@ -71,7 +67,7 @@ countyhealthrankings_links <- c(
 countyhealthrankings <- function(url) {
   chr_data <- tryCatch(read_csv(url, show_col_types = FALSE), error = function(e) return(NULL))
   if (is.null(chr_data)) return(NULL)
-  chr_data <- chr_data %>% select(!matches("=")) %>% filter(Name == paste(county, "County"))
+  chr_data <- chr_data %>% select(!matches("=")) %>% filter(Name == paste(county, "County")) %>% filter(`State Abbreviation` == state_abbreviation)
   long_data <- chr_data %>%
     pivot_longer(cols = -`Release Year`, names_to = "raw_col", values_to = "value") %>%
     filter(!is.na(value))
@@ -107,7 +103,6 @@ countyhealthrankings <- function(url) {
   return(wide_data)
 }
 
-# DIABETES ATLAS
 diabetesatlas <- function(file_path) {
   lines <- readLines(file_path)
   metadata_line <- lines[1]
@@ -167,7 +162,6 @@ diabetesatlas <- function(file_path) {
   return(data_final)
 }
 
-# HDSM
 heartdiseasestrokemortality <- function() {
   url <- paste0("https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=", county, "&$limit=2000&$order=year")
   json_data <- fromJSON(url)
@@ -187,7 +181,6 @@ heartdiseasestrokemortality <- function() {
     distinct()
 }
 
-# PLACES
 places <- function() {
   base_urls <- c(
     "https://data.cdc.gov/resource/swc5-untb.json",
@@ -264,7 +257,6 @@ ensure_final_newline <- function(file_path) {
   }
 }
 
-# EXECUTION
 diabetesatlas_data <- tibble()
 if (use_diabetes_atlas) {
   if (county != "McLennan") {

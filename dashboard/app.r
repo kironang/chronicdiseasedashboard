@@ -10,14 +10,14 @@ ui <- fluidPage(
   tags$head(
     tags$style(HTML("
       body {
-        background-color: #f0f2f5;
+        background-color: #f8f9fb;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: #2c3e50;
       }
       .container {
         max-width: 1100px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 30px;
       }
       h1, h2, h3 {
         font-weight: 600;
@@ -25,19 +25,23 @@ ui <- fluidPage(
       }
       .card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 40px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
       }
       .shiny-input-container {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
       }
       .plot-source {
-        font-size: 0.85em;
-        color: #888888;
-        margin-top: 10px;
-        text-align: center;
+        font-size: 1em;
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #ecf0f1;
+        border-left: 4px solid #3498db;
+        border-radius: 5px;
       }
       .dropdown-menu {
         max-height: 300px;
@@ -46,10 +50,19 @@ ui <- fluidPage(
       .tab-content {
         padding-top: 20px;
       }
+      .plotly {
+        border-radius: 8px;
+        padding: 5px;
+        background-color: #fff;
+      }
+      .picker-label {
+        font-weight: 500;
+        color: #34495e;
+      }
     "))
   ),
   div(class = "container",
-      titlePanel("McLennan County Dashboard"),
+      titlePanel("County Public Health Dashboard"),
       tabsetPanel(type = "tabs",
                   tabPanel("Health",
                            div(class = "card",
@@ -65,8 +78,8 @@ ui <- fluidPage(
                                  column(4, uiOutput("sex_ui1")),
                                  column(4, uiOutput("race_ui1")),
                                  column(12, uiOutput("year_ui1")),
-                                 column(12, plotlyOutput("plot1")),
-                                 column(12, div(textOutput("source1"), class = "plot-source"))
+                                 column(12, div(textOutput("source1"), class = "plot-source")),
+                                 column(12, plotlyOutput("plot1"))
                                )
                            )
                   ),
@@ -80,8 +93,8 @@ ui <- fluidPage(
                                  column(4, uiOutput("sex_ui2")),
                                  column(4, uiOutput("race_ui2")),
                                  column(12, uiOutput("year_ui2")),
-                                 column(12, plotlyOutput("plot2")),
-                                 column(12, div(textOutput("source2"), class = "plot-source"))
+                                 column(12, div(textOutput("source2"), class = "plot-source")),
+                                 column(12, plotlyOutput("plot2"))
                                )
                            )
                   ),
@@ -95,15 +108,17 @@ ui <- fluidPage(
                                  column(4, uiOutput("sex_ui3")),
                                  column(4, uiOutput("race_ui3")),
                                  column(12, uiOutput("year_ui3")),
-                                 column(12, plotlyOutput("plot3")),
-                                 column(12, div(textOutput("source3"), class = "plot-source"))
+                                 column(12, div(textOutput("source3"), class = "plot-source")),
+                                 column(12, plotlyOutput("plot3"))
                                )
                            )
                   ),
                   tabPanel("More Information",
                            div(class = "card",
                                h3("About this Dashboard"),
-                               p("PLACEHOLDER")
+                               p("This dashboard was created to help visualize and explore public health data by county. 
+                                  It allows users to select demographic breakdowns and indicators for a wide range of health categories. 
+                                  Data sources are displayed for transparency, and all visualizations are interactive and exportable.")
                            )
                   )
       )
@@ -120,209 +135,95 @@ server <- function(input, output, session) {
     list(unit = unit, source = source)
   }
   
-  # Panel 1
-  filtered_indicators1 <- reactive({
-    req(input$category1)
-    sort(data %>% filter(category == input$category1) %>% distinct(indicator) %>% pull())
-  })
-  output$indicator_ui1 <- renderUI({
-    selectInput("indicator1", "Select Indicator", choices = filtered_indicators1())
-  })
-  output$age_ui1 <- renderUI({
-    req(input$indicator1)
-    choices <- data %>% filter(indicator == input$indicator1) %>% distinct(age) %>% pull()
-    selectInput("age1", "Select Age", choices = sort(choices))
-  })
-  output$sex_ui1 <- renderUI({
-    req(input$indicator1)
-    choices <- data %>% filter(indicator == input$indicator1) %>% distinct(sex) %>% pull()
-    selectInput("sex1", "Select Sex", choices = sort(choices))
-  })
-  output$race_ui1 <- renderUI({
-    req(input$indicator1)
-    choices <- data %>% filter(indicator == input$indicator1) %>% distinct(race) %>% pull()
-    selectInput("race1", "Select Race", choices = sort(choices))
-  })
-  filtered_years1 <- reactive({
-    req(input$indicator1, input$age1, input$sex1, input$race1)
-    sort(data %>%
-           filter(indicator == input$indicator1,
-                  age == input$age1,
-                  sex == input$sex1,
-                  race == input$race1) %>%
-           distinct(year) %>% pull())
-  })
-  output$year_ui1 <- renderUI({
-    req(filtered_years1())
-    dropdownButton(
-      label = "Select Years", status = "primary", circle = FALSE,
-      checkboxGroupInput("years1", "Years",
-                         choices = filtered_years1(),
-                         selected = filtered_years1())
-    )
-  })
-  output$plot1 <- renderPlotly({
-    req(input$years1)
-    plot_data <- data %>%
-      filter(indicator == input$indicator1,
-             age == input$age1,
-             sex == input$sex1,
-             race == input$race1,
-             year %in% input$years1) %>%
-      arrange(year)
-    us <- get_unit_source(input$indicator1, input$age1, input$sex1, input$race1)
-    title_text <- paste0(input$indicator1, ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
-    plot_ly(plot_data, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
-            name = 'Value', line = list(color = '#2C3E50')) %>%
-      add_ribbons(ymin = ~lower, ymax = ~upper,
-                  fillcolor = 'rgba(44, 62, 80, 0.2)',
-                  line = list(color = 'transparent'),
-                  name = 'Uncertainty') %>%
-      layout(title = list(text = title_text, x = 0.5),
-             yaxis = list(title = "Value"),
-             xaxis = list(title = "Year", dtick = 1))
-  })
-  output$source1 <- renderText({
-    req(input$indicator1, input$age1, input$sex1, input$race1)
-    us <- get_unit_source(input$indicator1, input$age1, input$sex1, input$race1)
-    if(us$source != "") paste("Source:", us$source) else ""
-  })
+  # A function to generate repeated logic for each panel
+  create_panel_logic <- function(panel_number) {
+    cat_input <- paste0("category", panel_number)
+    ind_input <- paste0("indicator", panel_number)
+    age_input <- paste0("age", panel_number)
+    sex_input <- paste0("sex", panel_number)
+    race_input <- paste0("race", panel_number)
+    years_input <- paste0("years", panel_number)
+    year_ui <- paste0("year_ui", panel_number)
+    indicator_ui <- paste0("indicator_ui", panel_number)
+    age_ui <- paste0("age_ui", panel_number)
+    sex_ui <- paste0("sex_ui", panel_number)
+    race_ui <- paste0("race_ui", panel_number)
+    plot_output <- paste0("plot", panel_number)
+    source_output <- paste0("source", panel_number)
+    
+    filtered_indicators <- reactive({
+      req(input[[cat_input]])
+      sort(data %>% filter(category == input[[cat_input]]) %>% distinct(indicator) %>% pull())
+    })
+    output[[indicator_ui]] <- renderUI({
+      selectInput(ind_input, "Select Indicator", choices = filtered_indicators())
+    })
+    output[[age_ui]] <- renderUI({
+      req(input[[ind_input]])
+      choices <- data %>% filter(indicator == input[[ind_input]]) %>% distinct(age) %>% pull()
+      selectInput(age_input, "Select Age", choices = sort(choices))
+    })
+    output[[sex_ui]] <- renderUI({
+      req(input[[ind_input]])
+      choices <- data %>% filter(indicator == input[[ind_input]]) %>% distinct(sex) %>% pull()
+      selectInput(sex_input, "Select Sex", choices = sort(choices))
+    })
+    output[[race_ui]] <- renderUI({
+      req(input[[ind_input]])
+      choices <- data %>% filter(indicator == input[[ind_input]]) %>% distinct(race) %>% pull()
+      selectInput(race_input, "Select Race", choices = sort(choices))
+    })
+    filtered_years <- reactive({
+      req(input[[ind_input]], input[[age_input]], input[[sex_input]], input[[race_input]])
+      sort(data %>%
+             filter(indicator == input[[ind_input]],
+                    age == input[[age_input]],
+                    sex == input[[sex_input]],
+                    race == input[[race_input]]) %>%
+             distinct(year) %>% pull())
+    })
+    output[[year_ui]] <- renderUI({
+      req(filtered_years())
+      dropdownButton(
+        label = "Select Years", status = "primary", circle = FALSE,
+        checkboxGroupInput(years_input, "Years",
+                           choices = filtered_years(),
+                           selected = filtered_years())
+      )
+    })
+    output[[plot_output]] <- renderPlotly({
+      req(input[[years_input]])
+      plot_data <- data %>%
+        filter(indicator == input[[ind_input]],
+               age == input[[age_input]],
+               sex == input[[sex_input]],
+               race == input[[race_input]],
+               year %in% input[[years_input]]) %>%
+        arrange(year)
+      us <- get_unit_source(input[[ind_input]], input[[age_input]], input[[sex_input]], input[[race_input]])
+      title_text <- paste0(input[[ind_input]], ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
+      line_color <- c("#2C3E50", "#C0392B", "#2980B9")[as.integer(panel_number)]
+      fill_color <- paste0(substring(line_color, 1, 7), "33")
+      
+      plot_ly(plot_data, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
+              name = 'Value', line = list(color = line_color)) %>%
+        add_ribbons(ymin = ~lower, ymax = ~upper,
+                    fillcolor = fill_color,
+                    line = list(color = 'transparent'),
+                    name = 'Uncertainty') %>%
+        layout(title = list(text = title_text, x = 0.5),
+               yaxis = list(title = "Value"),
+               xaxis = list(title = "Year", dtick = 1))
+    })
+    output[[source_output]] <- renderText({
+      req(input[[ind_input]], input[[age_input]], input[[sex_input]], input[[race_input]])
+      us <- get_unit_source(input[[ind_input]], input[[age_input]], input[[sex_input]], input[[race_input]])
+      if(us$source != "") paste("Source:", us$source) else ""
+    })
+  }
   
-  # Panel 2
-  filtered_indicators2 <- reactive({
-    req(input$category2)
-    sort(data %>% filter(category == input$category2) %>% distinct(indicator) %>% pull())
-  })
-  output$indicator_ui2 <- renderUI({
-    selectInput("indicator2", "Select Indicator", choices = filtered_indicators2())
-  })
-  output$age_ui2 <- renderUI({
-    req(input$indicator2)
-    choices <- data %>% filter(indicator == input$indicator2) %>% distinct(age) %>% pull()
-    selectInput("age2", "Select Age", choices = sort(choices))
-  })
-  output$sex_ui2 <- renderUI({
-    req(input$indicator2)
-    choices <- data %>% filter(indicator == input$indicator2) %>% distinct(sex) %>% pull()
-    selectInput("sex2", "Select Sex", choices = sort(choices))
-  })
-  output$race_ui2 <- renderUI({
-    req(input$indicator2)
-    choices <- data %>% filter(indicator == input$indicator2) %>% distinct(race) %>% pull()
-    selectInput("race2", "Select Race", choices = sort(choices))
-  })
-  filtered_years2 <- reactive({
-    req(input$indicator2, input$age2, input$sex2, input$race2)
-    sort(data %>%
-           filter(indicator == input$indicator2,
-                  age == input$age2,
-                  sex == input$sex2,
-                  race == input$race2) %>%
-           distinct(year) %>% pull())
-  })
-  output$year_ui2 <- renderUI({
-    req(filtered_years2())
-    dropdownButton(
-      label = "Select Years", status = "primary", circle = FALSE,
-      checkboxGroupInput("years2", "Years",
-                         choices = filtered_years2(),
-                         selected = filtered_years2())
-    )
-  })
-  output$plot2 <- renderPlotly({
-    req(input$years2)
-    plot_data <- data %>%
-      filter(indicator == input$indicator2,
-             age == input$age2,
-             sex == input$sex2,
-             race == input$race2,
-             year %in% input$years2) %>%
-      arrange(year)
-    us <- get_unit_source(input$indicator2, input$age2, input$sex2, input$race2)
-    title_text <- paste0(input$indicator2, ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
-    plot_ly(plot_data, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
-            name = 'Value', line = list(color = '#C0392B')) %>%
-      add_ribbons(ymin = ~lower, ymax = ~upper,
-                  fillcolor = 'rgba(192, 57, 43, 0.2)',
-                  line = list(color = 'transparent'),
-                  name = 'Uncertainty') %>%
-      layout(title = list(text = title_text, x = 0.5),
-             yaxis = list(title = "Value"),
-             xaxis = list(title = "Year", dtick = 1))
-  })
-  output$source2 <- renderText({
-    req(input$indicator2, input$age2, input$sex2, input$race2)
-    us <- get_unit_source(input$indicator2, input$age2, input$sex2, input$race2)
-    if(us$source != "") paste("Source:", us$source) else ""
-  })
-  
-  # Panel 3
-  filtered_indicators3 <- reactive({
-    req(input$category3)
-    sort(data %>% filter(category == input$category3) %>% distinct(indicator) %>% pull())
-  })
-  output$indicator_ui3 <- renderUI({
-    selectInput("indicator3", "Select Indicator", choices = filtered_indicators3())
-  })
-  output$age_ui3 <- renderUI({
-    req(input$indicator3)
-    choices <- data %>% filter(indicator == input$indicator3) %>% distinct(age) %>% pull()
-    selectInput("age3", "Select Age", choices = sort(choices))
-  })
-  output$sex_ui3 <- renderUI({
-    req(input$indicator3)
-    choices <- data %>% filter(indicator == input$indicator3) %>% distinct(sex) %>% pull()
-    selectInput("sex3", "Select Sex", choices = sort(choices))
-  })
-  output$race_ui3 <- renderUI({
-    req(input$indicator3)
-    choices <- data %>% filter(indicator == input$indicator3) %>% distinct(race) %>% pull()
-    selectInput("race3", "Select Race", choices = sort(choices))
-  })
-  filtered_years3 <- reactive({
-    req(input$indicator3, input$age3, input$sex3, input$race3)
-    sort(data %>%
-           filter(indicator == input$indicator3,
-                  age == input$age3,
-                  sex == input$sex3,
-                  race == input$race3) %>%
-           distinct(year) %>% pull())
-  })
-  output$year_ui3 <- renderUI({
-    req(filtered_years3())
-    dropdownButton(
-      label = "Select Years", status = "primary", circle = FALSE,
-      checkboxGroupInput("years3", "Years",
-                         choices = filtered_years3(),
-                         selected = filtered_years3())
-    )
-  })
-  output$plot3 <- renderPlotly({
-    req(input$years3)
-    plot_data <- data %>%
-      filter(indicator == input$indicator3,
-             age == input$age3,
-             sex == input$sex3,
-             race == input$race3,
-             year %in% input$years3) %>%
-      arrange(year)
-    us <- get_unit_source(input$indicator3, input$age3, input$sex3, input$race3)
-    title_text <- paste0(input$indicator3, ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
-    plot_ly(plot_data, x = ~year, y = ~value, type = 'scatter', mode = 'lines+markers',
-            name = 'Value', line = list(color = '#2980B9')) %>%
-      add_ribbons(ymin = ~lower, ymax = ~upper,
-                  fillcolor = 'rgba(41, 128, 185, 0.2)',
-                  line = list(color = 'transparent'),
-                  name = 'Uncertainty') %>%
-      layout(title = list(text = title_text, x = 0.5),
-             yaxis = list(title = "Value"),
-             xaxis = list(title = "Year", dtick = 1))
-  })
-  output$source3 <- renderText({
-    req(input$indicator3, input$age3, input$sex3, input$race3)
-    us <- get_unit_source(input$indicator3, input$age3, input$sex3, input$race3)
-    if(us$source != "") paste("Source:", us$source) else ""
-  })
+  # Apply logic to all panels
+  lapply(1:3, function(i) create_panel_logic(i))
 }
 
 shinyApp(ui = ui, server = server)
