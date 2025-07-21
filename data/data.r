@@ -1,8 +1,14 @@
+# CONFIGURATION
+county <- "McLennan"
+use_diabetes_atlas <- TRUE
+
+# LIBRARIES
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(tidyverse)
 library(jsonlite)
 library(stringr)
 
+# UTILITIES
 clean_indicator <- function(x) {
   x %>%
     str_trim() %>%
@@ -13,7 +19,8 @@ clean_indicator <- function(x) {
 }
 
 safe_numeric <- function(x, quiet = FALSE) {
-  x[x %in% c("TX", "McLennan County", "NA")] <- NA
+  x[grepl("^[A-Z]{2}$", x)] <- NA  # Remove any 2-letter state codes
+  x[x == paste(county, "County")] <- NA            # Remove current county name
   suppressWarnings({
     x_num <- as.numeric(x)
   })
@@ -41,6 +48,7 @@ safe_integer <- function(x, quiet = FALSE) {
   x_int
 }
 
+# COUNTY HEALTH RANKINGS
 countyhealthrankings_links <- c(
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2025_v2.csv",
   "https://www.countyhealthrankings.org/sites/default/files/media/document/analytic_data2024.csv",
@@ -63,7 +71,7 @@ countyhealthrankings_links <- c(
 countyhealthrankings <- function(url) {
   chr_data <- tryCatch(read_csv(url, show_col_types = FALSE), error = function(e) return(NULL))
   if (is.null(chr_data)) return(NULL)
-  chr_data <- chr_data %>% select(!matches("=")) %>% filter(Name == "McLennan County")
+  chr_data <- chr_data %>% select(!matches("=")) %>% filter(Name == paste(county, "County"))
   long_data <- chr_data %>%
     pivot_longer(cols = -`Release Year`, names_to = "raw_col", values_to = "value") %>%
     filter(!is.na(value))
@@ -83,7 +91,7 @@ countyhealthrankings <- function(url) {
     ) %>%
     filter(!is.na(measure) & !is.na(indicator)) %>%
     select(`Release Year`, indicator, race, measure, value)
-  
+
   wide_data <- parsed_data %>%
     pivot_wider(names_from = measure, values_from = value) %>%
     mutate(
@@ -95,10 +103,11 @@ countyhealthrankings <- function(url) {
     ) %>%
     select(year, age, sex, race, indicator, value, lower, upper, unit, source) %>%
     arrange(year, indicator, race)
-  
+
   return(wide_data)
 }
 
+# DIABETES ATLAS
 diabetesatlas <- function(file_path) {
   lines <- readLines(file_path)
   metadata_line <- lines[1]
@@ -108,11 +117,10 @@ diabetesatlas <- function(file_path) {
   data_start_line <- which(grepl("^Year,", lines))
   data_raw <- read.csv(file_path, skip = data_start_line - 1, header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
   data_raw <- data_raw[1:nrow(data_raw) - 1, colnames(data_raw) != ""]
-  
   colnames(data_raw)[1] <- "year"
   data_raw$year <- safe_integer(data_raw$year)
   data_cols <- colnames(data_raw)[-1]
-  
+
   parts <- str_match(data_cols, "^(.*) - (.*)$")
   col_info <- data.frame(
     col_name = data_cols,
@@ -120,7 +128,7 @@ diabetesatlas <- function(file_path) {
     measure_raw = tolower(str_trim(parts[, 3])),
     stringsAsFactors = FALSE
   )
-  
+
   measure_map <- c(
     "percentage" = "value",
     "rate per 1000" = "value",
@@ -130,25 +138,23 @@ diabetesatlas <- function(file_path) {
   )
   col_info$measure <- measure_map[col_info$measure_raw]
   col_info$measure[is.na(col_info$measure)] <- col_info$measure_raw[is.na(col_info$measure)]
-  
+
   data_long <- data_raw %>%
     pivot_longer(cols = -year, names_to = "col_name", values_to = "val_raw") %>%
     left_join(col_info, by = "col_name") %>%
     mutate(value_num = safe_numeric(val_raw)) %>%
     select(-val_raw)
-  
+
   data_wide <- data_long %>%
     select(year, group, measure, value_num) %>%
     pivot_wider(names_from = measure, values_from = value_num)
-  
+
   data_final <- data_wide %>%
     mutate(
       age = ifelse(str_detect(group, "^(\\d{1,2}-\\d{1,2}|65\\+)"), group, NA_character_),
       sex = ifelse(str_detect(group, "\\b(Male|Female)\\b"), group, NA_character_),
       race = ifelse(group %in% c("Black", "White", "Hispanic", "Asian", "American Indian/Alaska Native"), group, NA_character_),
       age = ifelse(str_detect(group, "^Ages "), str_remove(group, "^Ages "), age),
-      sex = ifelse(sex == group, sex, NA_character_),
-      race = ifelse(race == group, race, NA_character_),
       age = ifelse(group == "Total", NA_character_, age),
       sex = ifelse(group == "Total", NA_character_, sex),
       race = ifelse(group == "Total", NA_character_, race),
@@ -157,12 +163,13 @@ diabetesatlas <- function(file_path) {
       source = "DA"
     ) %>%
     select(year, age, sex, race, indicator, value, lower, upper, unit, source)
-  
+
   return(data_final)
 }
 
+# HDSM
 heartdiseasestrokemortality <- function() {
-  url <- "https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=McLennan&$limit=2000&$order=year"
+  url <- paste0("https://data.cdc.gov/resource/7b9s-s8ck.json?locationdesc=", county, "&$limit=2000&$order=year")
   json_data <- fromJSON(url)
   json_data %>%
     transmute(
@@ -180,21 +187,22 @@ heartdiseasestrokemortality <- function() {
     distinct()
 }
 
+# PLACES
 places <- function() {
-  urls <- c(
-    "https://data.cdc.gov/resource/swc5-untb.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/h3ej-a9ec.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/duw2-7jbt.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/pqpp-u99h.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence",
-    "https://data.cdc.gov/resource/dv4u-3x3q.json?locationname=McLennan&$limit=2000&data_value_type=Age-adjusted%20prevalence"
+  base_urls <- c(
+    "https://data.cdc.gov/resource/swc5-untb.json",
+    "https://data.cdc.gov/resource/h3ej-a9ec.json",
+    "https://data.cdc.gov/resource/duw2-7jbt.json",
+    "https://data.cdc.gov/resource/pqpp-u99h.json",
+    "https://data.cdc.gov/resource/dv4u-3x3q.json"
   )
-  
+
+  urls <- paste0(base_urls, "?locationname=", county, "&$limit=2000&data_value_type=Age-adjusted%20prevalence")
+
   extract_demographics <- function(text) {
     age <- str_extract(text, "aged\\s+(\\d{1,2}[-–]\\d{1,2}|\\d{2,3}|>=\\d{1,2})\\s*years?")
     age <- str_replace_all(age, "aged\\s*|years?", "")
     age <- str_trim(age)
-    
-    # If no specific age range found, but "adults" is present, use "18+"
     if (is.na(age) || age == "") {
       if (str_detect(text, regex("adults", ignore_case = TRUE))) {
         age <- "18+"
@@ -202,13 +210,11 @@ places <- function() {
         age <- NA_character_
       }
     }
-    
     sex <- case_when(
       str_detect(text, regex("women|females", ignore_case = TRUE)) ~ "Female",
       str_detect(text, regex("men|males", ignore_case = TRUE)) ~ "Male",
       TRUE ~ NA_character_
     )
-    
     race <- case_when(
       str_detect(text, regex("Black|African American", ignore_case = TRUE)) ~ "Black or African American",
       str_detect(text, regex("White", ignore_case = TRUE)) ~ "White",
@@ -218,16 +224,12 @@ places <- function() {
       str_detect(text, regex("Pacific Islander", ignore_case = TRUE)) ~ "Pacific Islander",
       TRUE ~ NA_character_
     )
-    
     list(age = age, sex = sex, race = race)
   }
-  
-  
+
   places_list <- map(urls, function(url) {
     json_data <- fromJSON(url)
-    
     demographics <- map(json_data$measure, extract_demographics) %>% transpose()
-    
     json_data %>%
       mutate(
         indicator = str_replace(measure, " among.*", ""),
@@ -249,9 +251,10 @@ places <- function() {
       ) %>%
       distinct()
   })
-  
+
   bind_rows(places_list)
 }
+
 ensure_final_newline <- function(file_path) {
   con <- file(file_path, open = "rb")
   raw_data <- readBin(con, what = "raw", n = file.info(file_path)$size)
@@ -261,10 +264,18 @@ ensure_final_newline <- function(file_path) {
   }
 }
 
-files <- list.files(pattern = "^DiabetesAtlas")
-walk(files, ensure_final_newline)
+# EXECUTION
+diabetesatlas_data <- tibble()
+if (use_diabetes_atlas) {
+  if (county != "McLennan") {
+    warning("Diabetes Atlas data is only available for McLennan County. Set `use_diabetes_atlas <- FALSE` to disable.")
+  } else {
+    files <- list.files(pattern = "^DiabetesAtlas")
+    walk(files, ensure_final_newline)
+    diabetesatlas_data <- map_dfr(files, diabetesatlas)
+  }
+}
 
-diabetesatlas_data <- map_dfr(files, diabetesatlas)
 hdsm_data <- heartdiseasestrokemortality()
 places_data <- places()
 chr_data <- map_dfr(countyhealthrankings_links, countyhealthrankings)
@@ -279,7 +290,7 @@ all_data <- bind_rows(diabetesatlas_data, hdsm_data, places_data, chr_data) %>%
   filter(!is.na(year) & !is.na(value))
 
 if (!file.exists("indicators.csv")) {
-  message("UNABLE TO LOCATE 'indicators.csv' IN THE CURRENT WORKING DIRECTORY, CREATING IT NOW...")
+  message("UNABLE TO LOCATE 'indicators.csv', CREATING...")
   indicator_template <- all_data %>%
     distinct(indicator, unit, source) %>%
     arrange(indicator) %>%
@@ -294,7 +305,7 @@ if (!file.exists("indicators.csv")) {
     ) %>%
     ungroup()
   write_csv(indicator_template, "indicators.csv")
-  stop("FILE CREATED SUCCESSFULLY. PLEASE COMPLETE 'indicators.csv'")
+  stop("FILE CREATED. PLEASE COMPLETE 'indicators.csv'")
 }
 
 indicator_meta <- read_csv("indicators.csv", show_col_types = FALSE)
@@ -313,7 +324,7 @@ filtered_data <- all_data %>%
     unit = if_else(!is.na(new_unit), new_unit, unit),
     category = if_else(!is.na(category), category, "No Category"),
     subcategory = if_else(!is.na(subcategory), subcategory, "No Subcategory"),
-    description = if_else(!is.na(description), description, "No Description"),
+    description = if_else(!is.na(description), description, "No Description")
   ) %>%
   select(year, age, sex, race, indicator, value, lower, upper, unit, source, category, subcategory, description)
 

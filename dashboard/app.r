@@ -85,11 +85,11 @@ ui <- fluidPage(
                                )
                            )
                   ),
-                  tabPanel("Risk Factors",
+                  tabPanel("Diseases and Lifestyle Conditions",
                            div(class = "card",
                                fluidRow(
                                  column(12, selectInput("category3", "Select Category",
-                                                        choices = sort(c("Risk Factors")))),
+                                                        choices = sort(c("Diseases and Lifestyle Conditions")))),
                                  column(12, uiOutput("indicator_ui3")),
                                  column(4, uiOutput("age_ui3")),
                                  column(4, uiOutput("sex_ui3")),
