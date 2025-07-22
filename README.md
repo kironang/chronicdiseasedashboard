@@ -50,19 +50,25 @@ Please read all of these instructions before deployment! In this section, not on
 
 First, open this website with your favorite web browser: https://github.com/kironang/mclennancountydashboard. Click on ``<> Code``, then click on ``Download ZIP``. See the image below for more information.
 
-![Screenshot of https://github.com/kironang/mclennancountydashboard showing users where the download button is](documentation/0.png)
+![Screenshot of https://github.com/kironang/mclennancountydashboard showing users where the download button is](image.png)
 
-Open the folder where the ZIP file went and extract all its contents. A new directory called "mclennancountydashboard-main" should appear. 
+Open the folder where the ZIP file went and extract all its contents. A new directory called ``mclennancountydashboard-main`` should appear. 
 
-![Screenshot of Windows File Explorer showing users that another directory is created after extracting the contents of the ZIP file](image.png)
+![Screenshot of Windows File Explorer showing users that another directory is created after extracting the contents of the ZIP file](image-1.png)
 
 At this point, please open RStudio and navigate into the folder until you see the README.md file.
 
-![Screenshot of RStudio interface showing the repository's files](image-1.png)
+![Screenshot of RStudio interface showing the repository's files](image-2.png)
 
+If you're only interested in McLennan County, you can already run the app; just click into the ``dashboard`` folder and then open the ``app.r`` file. Click on the ``Run app`` button.
 
+![Screenshot of RStudio interface showing users where the run button is](image-3.png)
 
-If you're only interested in McLennan County, you can already run the app. If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel. This magical data structure made it super easy for me to merge different datasets together. The
+Once the app starts to run, you should immediately see the dashboard appear in a separate window.
+
+![Screenshot of the dashboard running locally on my computer](image-4.png)
+
+If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel. This magical data structure made it super easy for me to merge different datasets together. The
 
 
 
@@ -78,10 +84,10 @@ If you're only interested in McLennan County, you can already run the app. If yo
 If you're in a different county, delete the following files:
 - data.csv
 - indicators.csv
-- All the "DiabetesAtlas" files
+- All the ``DiabetesAtlas`` files
 
-All the "DiabetesAtlas" files were downloaded from this CDC website after specifically selecting data for McLennan County: https://gis.cdc.gov/grasp/diabetes/diabetesatlas-surveillance.html. If you would like to incorporate this dataset, please specify your county on the website and download the CSV files you want to include. Then, move the CSV files back into the "data" folder. If you don't need this diabetes data, then just go to the "data.r" file and change ``use_diabetes_atlas <- TRUE`` to ``use_diabetes_atlas <- FALSE``.
+All the ``DiabetesAtlas`` files were downloaded from this CDC website after specifically selecting data for McLennan County: https://gis.cdc.gov/grasp/diabetes/diabetesatlas-surveillance.html. If you would like to incorporate this dataset, please specify your county on the website and download the CSV files you want to include. Then, move the CSV files back into the ``data`` folder. If you don't need this diabetes data, then just go to the ``data.r`` file and change ``use_diabetes_atlas <- TRUE`` to ``use_diabetes_atlas <- FALSE``.
 
-Since you probably have "data.r" open already at this point, please change ``county <- "McLennan"`` and ``state_abbreviation <- "TX"``. Now, your "data" folder should be completely empty, except for a "data.r" file. In RStudio, click "Source" to run all the code in the "data.r" file. An indicators.csv file will be created for you. Edit the indicators.csv file as described above, and then source "data.r" again.
+Since you probably have ``data.r`` open already at this point, please change ``county <- "McLennan"`` and ``state_abbreviation <- "TX"`` as needed. Now, your ``data`` folder should be completely empty, except for a ``data.r`` file. In RStudio, click ``Source`` to run all the code in the ``data.r`` file. An indicators.csv file will be created for you. Edit the indicators.csv file as described above, and then source ``data.r`` again.
 
 ## How can I deploy the dashboard to a public-facing website?
