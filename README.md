@@ -43,12 +43,26 @@ Good morning! Thank you for choosing this repository as a solution for your dash
 
 I've added images where appropriate to improve your experience. Please let me know if anything is outdated, incorrect, or unhelpful by contacting me at kiron_ang1@baylor.edu. Finally, please keep in mind that I firmly support open source information; I encourage you to do the same by publishing your code and data publicly, or at least by mentioning this repository.
 
-With introductions out of the way, we will now begin!
+One last note: This manual assumes that you have basic familiarity with R and RStudio. Additionally, I wrote this manual with my colleagues in mind, and all of them use Windows. Again, if anything is unclear, please send me an email and I'll be happy to help. With introductions out of the way, we will now begin!
 
 ## How can I run the dashboard on my computer?
 Please read all of these instructions before deployment! In this section, not only do I provide instructions for local testing, but also I explain the data preparation needed to incorporate additional datasets.
 
-First, download this repository's files at https://github.com/kironang/mclennancountydashboard. If you're only interested in McLennan County, you can already run the app. If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel. This magical data structure made it super easy for me to merge different datasets together. The
+First, open this website with your favorite web browser: https://github.com/kironang/mclennancountydashboard. Click on ``<> Code``, then click on ``Download ZIP``. See the image below for more information.
+
+![Screenshot of https://github.com/kironang/mclennancountydashboard showing users where the download button is](documentation/0.png)
+
+Open the folder where the ZIP file went and extract all its contents. A new directory called "mclennancountydashboard-main" should appear. 
+
+![Screenshot of Windows File Explorer showing users that another directory is created after extracting the contents of the ZIP file](image.png)
+
+At this point, please open RStudio and navigate into the folder until you see the README.md file.
+
+![Screenshot of RStudio interface showing the repository's files](image-1.png)
+
+
+
+If you're only interested in McLennan County, you can already run the app. If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel. This magical data structure made it super easy for me to merge different datasets together. The
 
 
 
