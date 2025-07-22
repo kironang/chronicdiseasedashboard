@@ -60,7 +60,7 @@ At this point, please open RStudio and navigate into the folder until you see th
 
 ![Screenshot of RStudio interface showing the repository's files](image-2.png)
 
-If you're only interested in McLennan County, you can already run the app; just click into the ``dashboard`` folder and then open the ``app.r`` file. Click on the ``Run app`` button.
+At this point, you can already run the app, especially if you're just interested in McLennan County; just click into the ``dashboard`` folder and then open the ``app.r`` file. Wait a few seconds; if a yellow message appears and asks you to install some libraries, click ``Install``. Once everything is installed, click on the ``Run app`` button.
 
 ![Screenshot of RStudio interface showing users where the run button is](image-3.png)
 
@@ -68,10 +68,7 @@ Once the app starts to run, you should immediately see the dashboard appear in a
 
 ![Screenshot of the dashboard running locally on my computer](image-4.png)
 
-If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel. This magical data structure made it super easy for me to merge different datasets together. The
-
-
-
+Congratulations! You've successfully tested out the dashboard on your own computer! If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel. This magical data structure made it super easy for me to merge different datasets together. Each row represents a specific indicator present across the four datasets, and each row must belong to one of the following categories:
 
 - Population Health
 - Access to Care
@@ -91,3 +88,5 @@ All the ``DiabetesAtlas`` files were downloaded from this CDC website after spec
 Since you probably have ``data.r`` open already at this point, please change ``county <- "McLennan"`` and ``state_abbreviation <- "TX"`` as needed. Now, your ``data`` folder should be completely empty, except for a ``data.r`` file. In RStudio, click ``Source`` to run all the code in the ``data.r`` file. An indicators.csv file will be created for you. Edit the indicators.csv file as described above, and then source ``data.r`` again.
 
 ## How can I deploy the dashboard to a public-facing website?
+
+## How do I add more datasets to the dashboard?
