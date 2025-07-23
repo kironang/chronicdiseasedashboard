@@ -8,27 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: '4.5.1'
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.5.1'
 
-    - name: Install rsconnect package
-      run: Rscript -e "install.packages('rsconnect', repos='https://cloud.r-project.org')"
-
-    - name: Deploy Shiny app
-      env:
-        RSCONNECT_NAME: ${{ secrets.NAME }}
-        RSCONNECT_TOKEN: ${{ secrets.TOKEN }}
-        RSCONNECT_SECRET: ${{ secrets.SECRET }}
-      run: |
-        Rscript -e "
-        library(rsconnect);
-        rsconnect::setAccountInfo(
-          name = Sys.getenv('RSCONNECT_NAME'),
-          token = Sys.getenv('RSCONNECT_TOKEN'),
-          secret = Sys.getenv('RSCONNECT_SECRET')
-        );
-        rsconnect::deployApp('dashboard', launch.browser = FALSE);
-        "
+      - name: Install rsconnect and deploy Shiny app
+        env:
+          RSCONNECT_NAME: ${{ secrets.NAME }}
+          RSCONNECT_TOKEN: ${{ secrets.TOKEN }}
+          RSCONNECT_SECRET: ${{ secrets.SECRET }}
+        run: |
+          Rscript -e "
+            if (!requireNamespace('rsconnect', quietly = TRUE)) {
+              install.packages('rsconnect', repos = 'https://cloud.r-project.org');
+            }
+            library(rsconnect);
+            rsconnect::setAccountInfo(
+              name = Sys.getenv('RSCONNECT_NAME'),
+              token = Sys.getenv('RSCONNECT_TOKEN'),
+              secret = Sys.getenv('RSCONNECT_SECRET')
+            );
+            rsconnect::deployApp('dashboard', launch.browser = FALSE);
+          "
