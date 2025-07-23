@@ -1,8 +1,9 @@
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 county <- "McLennan"
 state_abbreviation <- "TX"
 use_diabetes_atlas <- TRUE
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(tidyverse)
 library(jsonlite)
 library(stringr)
@@ -320,4 +321,4 @@ filtered_data <- all_data %>%
   ) %>%
   select(year, age, sex, race, indicator, value, lower, upper, unit, source, category, subcategory, description)
 
-write_csv(filtered_data, "data.csv")
+write_csv(filtered_data, "../dashboard/data.csv")

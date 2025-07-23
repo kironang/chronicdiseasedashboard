@@ -4,7 +4,7 @@ library(dplyr)
 library(readr)
 library(shinyWidgets)
 
-data <- read_csv("../data/data.csv")
+data <- read_csv("data.csv")
 
 ui <- fluidPage(
   tags$head(

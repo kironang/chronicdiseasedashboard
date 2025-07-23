@@ -99,6 +99,6 @@ This is the fun part! Sign up for an account at https://shinyapps.io; you should
 
 ![Screenshot of the shinyapps.io website interface where users can see their name, token, and secret](image-6.png)
 
-Take note of the name, token, and secret. To deploy the dashboard, you need to edit the ``deploy.r`` script found in the ``dashboard`` directory. Swap out the strings for your information and then source the script in RStudio.
+Take note of the name, token, and secret. To deploy the dashboard, you need to edit the ``deploy.r`` found in the same directory as this ``README.md`` file. Swap out the strings for your information and then source the script in RStudio. Again, if you see a yellow warning asking you to install the necessary library, please click ``Install``.
 
 ## How do I add more datasets to the dashboard?
