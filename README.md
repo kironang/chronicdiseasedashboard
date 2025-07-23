@@ -68,7 +68,11 @@ Once the app starts to run, you should immediately see the dashboard appear in a
 
 ![Screenshot of the dashboard running locally on my computer](image-4.png)
 
-Congratulations! You've successfully tested out the dashboard on your own computer! If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel. This magical data structure made it super easy for me to merge different datasets together. Each row represents a specific indicator present across the four datasets, and each row must belong to one of the following categories:
+Congratulations! You've successfully tested out the dashboard on your own computer! If you want to change the indicator names, units, or categories, open and edit the indicators.csv file in Excel (or any other application that can open and edit CSV files easily). 
+
+![Screenshot of Excel interface showing users the structure of the indicators.csv file](image-5.png)
+
+This magical data structure made it super easy for me to merge different datasets together. Each row represents a specific indicator present across the four datasets, and each row must belong to one of the following categories:
 
 - Population Health
 - Access to Care
@@ -77,6 +81,8 @@ Congratulations! You've successfully tested out the dashboard on your own comput
 - No Category
 - Mortality
 - Diseases and Lifestyle Conditions
+
+The first three columns — ``indicator``, ``unit``, and ``source`` — give information on the original measurements that were present in the datasets provided. All the other columns can be modified; the ``data.r`` script will use this information to modify and transform the data accordingly. The ``new_indicator`` 
 
 If you're in a different county, delete the following files:
 - data.csv
