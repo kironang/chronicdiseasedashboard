@@ -97,8 +97,8 @@ Since you probably have ``data.r`` open already at this point, please change ``c
 
 This is the fun part! Sign up for an account at https://shinyapps.io; you should see a screen like the image below.
 
-![Screenshot of the shinyapps.io website interface showing where users can find their name, token, and secret](image-6.png)
+![Screenshot of the shinyapps.io website interface where users can see their name, token, and secret](image-6.png)
 
-Take note of the name, token, and secret. That information will be important, because to deploy the dashboard, you need to edit the ``deploy.r`` script found in the ``dashboard`` directory. Swap out the strings for your information and then source the script in RStudio.
+Take note of the name, token, and secret. To deploy the dashboard, you need to edit the ``deploy.r`` script found in the ``dashboard`` directory. Swap out the strings for your information and then source the script in RStudio.
 
 ## How do I add more datasets to the dashboard?
