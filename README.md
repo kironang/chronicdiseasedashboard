@@ -95,10 +95,16 @@ Since you probably have ``data.r`` open already at this point, please change ``c
 
 ## How can I deploy the dashboard to a public-facing website?
 
-This is the fun part! Sign up for an account at https://shinyapps.io; you should see a screen like the image below.
+This is the fun part! Sign up for an account at https://shinyapps.io; you should see a screen like the image below. Do NOT pay any money. You can do this for free.
 
 ![Screenshot of the shinyapps.io website interface where users can see their name, token, and secret](image-6.png)
 
 Take note of the name, token, and secret. To deploy the dashboard, you need to edit the ``deploy.r`` found in the same directory as this ``README.md`` file. Swap out the strings for your information and then source the script in RStudio. Again, if you see a yellow warning asking you to install the necessary library, please click ``Install``.
+
+It might take a few minutes to deploy the app; this is completely normal. At some point, though, you should see a message like the one below to inform you of the completed deployment:
+
+![Screenshot of the RStudio console interface demonstrating that the app has been successfully deployed to https://kiron.shinyapps.io/dashboard](image-7.png)
+
+Amazing work! You've finished deploying the dashboard online! Please bear in mind that there are some usage limits to the shinyapps.io platform, at least if you're using the free plan. I still recommend using only the free plan, because for most use cases, the free plan is sufficient.
 
 ## How do I add more datasets to the dashboard?
