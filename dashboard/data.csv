@@ -1101,10 +1101,10 @@ year,age,sex,race,indicator,value,lower,upper,unit,source,category,subcategory,d
 2023,Overall,Overall,Overall,Census Participation,0.599,NA,NA,Raw Count,CHR,No Category,No Subcategory,No Description
 2024,Overall,Overall,Overall,Census Participation,0.599,NA,NA,Raw Count,CHR,No Category,No Subcategory,No Description
 2025,Overall,Overall,Overall,Census Participation,0.599,NA,NA,Raw Count,CHR,No Category,No Subcategory,No Description
-2018,21-65,Female,Overall,Cervical Cancer Screening,82.2,80.1,84.2,"Age-adjusted prevalence, %",PLACES,Access to Care,No Subcategory,No Description
-2018,21-65,Female,Overall,Cervical Cancer Screening,82.2,80.1,84.2,"Age-adjusted prevalence, %",PLACES,Access to Care,No Subcategory,No Description
-2020,21-65,Female,Overall,Cervical Cancer Screening,78.2,76,80.4,"Age-adjusted prevalence, %",PLACES,Access to Care,No Subcategory,No Description
-2020,21-65,Female,Overall,Cervical Cancer Screening,78.2,76,80.4,"Age-adjusted prevalence, %",PLACES,Access to Care,No Subcategory,No Description
+2018,21-65,Female,Overall,Cervical Cancer Screening,82.2,80.1,84.2,"Age-adjusted prevalence, %",PLACES,No Category,No Subcategory,No Description
+2018,21-65,Female,Overall,Cervical Cancer Screening,82.2,80.1,84.2,"Age-adjusted prevalence, %",PLACES,No Category,No Subcategory,No Description
+2020,21-65,Female,Overall,Cervical Cancer Screening,78.2,76,80.4,"Age-adjusted prevalence, %",PLACES,No Category,No Subcategory,No Description
+2020,21-65,Female,Overall,Cervical Cancer Screening,78.2,76,80.4,"Age-adjusted prevalence, %",PLACES,No Category,No Subcategory,No Description
 2013,Overall,Overall,Overall,Child Mortality,73.761405304,62.8,84.8,Raw Count,CHR,Mortality,No Subcategory,No Description
 2014,Overall,Overall,Overall,Child Mortality,73.761405304,62.8,84.8,Raw Count,CHR,Mortality,No Subcategory,No Description
 2015,Overall,Overall,Overall,Child Mortality,57.49224694,47.9,67.1,Raw Count,CHR,Mortality,No Subcategory,No Description

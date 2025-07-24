@@ -41,7 +41,7 @@ Cancer (excluding Skin Cancer),"Age-adjusted prevalence, %",PLACES,,,no,Diseases
 Cancer (non-Skin) Or Melanoma,"Age-adjusted prevalence, %",PLACES,,,no,Diseases and Lifestyle Conditions,,
 Cardiovascular Disease (cvd),"Age-Standardized, Spatiotemporally Smoothed Rate, per 100,000",HDSM,,,no,Mortality,,
 Census Participation,Raw Count,CHR,,,no,No Category,,
-Cervical Cancer Screening,"Age-adjusted prevalence, %",PLACES,,,no,Access to Care,,
+Cervical Cancer Screening,"Age-adjusted prevalence, %",PLACES,,,no,No Category,,
 Child Care Centers,Raw Count,CHR,Childcare Centers,,no,Childcare and Education,,
 Child Care Cost Burden,Raw Count,CHR,Childcare Cost Burden,,no,Childcare and Education,,
 Child Mortality,Raw Count,CHR,,,no,Mortality,,

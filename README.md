@@ -82,16 +82,22 @@ This magical data structure made it super easy for me to merge different dataset
 - Mortality
 - Diseases and Lifestyle Conditions
 
-The first three columns — ``indicator``, ``unit``, and ``source`` — give information on the original measurements that were present in the datasets provided. All the other columns can be modified; the ``data.r`` script will use this information to modify and transform the data accordingly. The ``new_indicator`` 
+You can add more categories; please see the relevant section below for more information.
+
+The first three columns — ``indicator``, ``unit``, and ``source`` — give information on the original measurements that were present in the datasets provided. All the other columns can be modified; the ``data.r`` script will use this information to modify and transform the data accordingly. Writing something in the ``new_indicator`` will tell the ``data.r`` script to rename the indicator to the new name; you can rename the unit by using ``new_unit``. Renaming units when appropriate makes the vertical axis labels elegant on the dashboard. 
+
+The ``exclude`` column is prepopulated with the word "no"; for quick testing, you can swap "no" for "yes" to remove an indicator from the dataset completely. Just make sure to source the ``data.r`` script again! I should say now that the ideal solution is to simply put "No Category" for unwanted indicators, but I wanted to give people as many options as possible for developing their own workflows; perhaps having useless categories or blank category values is annoying to you. ``subcategory`` and ``description`` are optional and currently serve no purpose; they will be important in a later update.
+
+There are two important things to remember: First of all, every time you make a change to ``indicators.csv``, you need to source ``data.r`` again to update ``data.csv``. Additionally, ``data.r`` and ``indicators.csv`` only apply to the datasets I've already included by default. You do NOT need to touch ``indicators.csv`` if you are simply adding more data for McLennan County. On the other hand, the process is a little more complicated if you are located elsewhere...
 
 If you're in a different county, delete the following files:
-- data.csv
-- indicators.csv
-- All the ``DiabetesAtlas`` files
+- ``dashboard/data.csv``
+- ``data/indicators.csv``
+- All the ``DiabetesAtlas`` files in the ``data`` directory
 
 All the ``DiabetesAtlas`` files were downloaded from this CDC website after specifically selecting data for McLennan County: https://gis.cdc.gov/grasp/diabetes/diabetesatlas-surveillance.html. If you would like to incorporate this dataset, please specify your county on the website and download the CSV files you want to include. Then, move the CSV files back into the ``data`` folder. If you don't need this diabetes data, then just go to the ``data.r`` file and change ``use_diabetes_atlas <- TRUE`` to ``use_diabetes_atlas <- FALSE``.
 
-Since you probably have ``data.r`` open already at this point, please change ``county <- "McLennan"`` and ``state_abbreviation <- "TX"`` as needed. Now, your ``data`` folder should be completely empty, except for a ``data.r`` file. In RStudio, click ``Source`` to run all the code in the ``data.r`` file. An indicators.csv file will be created for you. Edit the indicators.csv file as described above, and then source ``data.r`` again.
+Since you probably have ``data.r`` open already at this point, please change ``county <- "McLennan"`` and ``state_abbreviation <- "TX"`` as needed. Now, your ``data`` folder should be completely empty, except for a ``data.r`` file. In RStudio, click ``Source`` to run all the code in the ``data.r`` file. An indicators.csv file will be created for you. Edit the indicators.csv file as described above, and then source ``data.r`` again. Run the ``app.r`` script again to display the new data!
 
 ## How can I deploy the dashboard to a public-facing website?
 
@@ -119,6 +125,6 @@ The "description" column is currently useless. In the future, I plan to add a se
 
 [add more here about the subcategory column]
 
-
+## How can I add more categories? How can I change the tabs?
 
 
