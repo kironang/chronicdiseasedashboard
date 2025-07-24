@@ -50,7 +50,7 @@ Please read all of these instructions before deployment! In this section, not on
 
 First, open this website with your favorite web browser: https://github.com/kironang/mclennancountydashboard. Click on ``<> Code``, then click on ``Download ZIP``. See the image below for more information.
 
-![Screenshot of https://github.com/kironang/mclennancountydashboard showing users where the download button is](image.png)
+![Screenshot of https://github.com/kironang/mclennancountydashboard showing users where the download button is](image-8.png)
 
 Open the folder where the ZIP file went and extract all its contents. A new directory called ``mclennancountydashboard-main`` should appear. 
 
@@ -108,3 +108,7 @@ It might take a few minutes to deploy the app; this is completely normal. At som
 Amazing work! You've finished deploying the dashboard online! Please bear in mind that there are some usage limits to the shinyapps.io platform, at least if you're using the free plan. I still recommend using only the free plan, because for most use cases, the free plan is sufficient.
 
 ## How do I add more datasets to the dashboard?
+
+Now, it's time to address the most important question! Let's say that you want to add a new dataset; let's pretend that this dataset is named ``Dataset A``.
+
+
