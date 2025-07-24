@@ -78,8 +78,8 @@ ui <- fluidPage(
                                  column(4, uiOutput("sex_ui1")),
                                  column(4, uiOutput("race_ui1")),
                                  column(12, uiOutput("year_ui1")),
-                                 column(12, div(textOutput("source1"), class = "plot-source")),
-                                 column(12, highchartOutput("plot1"))
+                                 column(12, highchartOutput("plot1")),
+                                 column(12, div(textOutput("source1"), class = "plot-source"))
                                )
                            )
                   ),
@@ -93,8 +93,9 @@ ui <- fluidPage(
                                  column(4, uiOutput("sex_ui2")),
                                  column(4, uiOutput("race_ui2")),
                                  column(12, uiOutput("year_ui2")),
-                                 column(12, div(textOutput("source2"), class = "plot-source")),
-                                 column(12, highchartOutput("plot2"))
+                                 
+                                 column(12, highchartOutput("plot2")),
+                                 column(12, div(textOutput("source2"), class = "plot-source"))
                                )
                            )
                   ),
@@ -108,8 +109,9 @@ ui <- fluidPage(
                                  column(4, uiOutput("sex_ui3")),
                                  column(4, uiOutput("race_ui3")),
                                  column(12, uiOutput("year_ui3")),
-                                 column(12, div(textOutput("source3"), class = "plot-source")),
-                                 column(12, highchartOutput("plot3"))
+                                 
+                                 column(12, highchartOutput("plot3")),
+                                 column(12, div(textOutput("source3"), class = "plot-source"))
                                )
                            )
                   ),
