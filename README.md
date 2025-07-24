@@ -109,6 +109,16 @@ Amazing work! You've finished deploying the dashboard online! Please bear in min
 
 ## How do I add more datasets to the dashboard?
 
-Now, it's time to address the most important question! Let's say that you want to add a new dataset; let's pretend that this dataset is named ``Dataset A``.
+Now, it's time to address the most important question! Let's say that you want to add a new dataset; let's pretend that this dataset is named ``Dataset A``. I will be very blunt and say that, unless you feel comfortable with the R programming language, the easiest method for adding a new dataset is to convert ``Dataset A`` to a CSV file like ``dataset_a.csv``, format it so it looks similar to the data in ``dashboard/data.csv``.
+
+
+
+## Does the "description" column do anything? What about the "subcategory" column?
+
+The "description" column is currently useless. In the future, I plan to add a section for paragraphs under the graph, and that's where the text in the description column would go. The "subcategory" column is not necessary to fill out, but you can use it to add another dropdown for further organization.
+
+[add more here about the subcategory column]
+
+
 
 
