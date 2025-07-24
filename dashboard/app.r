@@ -208,7 +208,7 @@ server <- function(input, output, session) {
         arrange(year)
       
       us <- get_unit_source(input[[ind_input]], input[[age_input]], input[[sex_input]], input[[race_input]])
-      title_text <- paste0(input[[ind_input]], ifelse(us$unit != "", paste0(" (", us$unit, ")"), ""))
+      title_text <- input[[ind_input]]
       
       hc <- highchart() %>%
         hc_title(text = title_text) %>%
