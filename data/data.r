@@ -319,6 +319,7 @@ filtered_data <- all_data %>%
     subcategory = if_else(!is.na(subcategory), subcategory, "No Subcategory"),
     description = if_else(!is.na(description), description, "No Description")
   ) %>%
-  select(year, age, sex, race, indicator, value, lower, upper, unit, source, category, subcategory, description)
+  select(year, age, sex, race, indicator, value, lower, upper, unit, source, category, subcategory, description) %>%
+  arrange(indicator, year, race)
 
 write_csv(filtered_data, "../dashboard/data.csv")
